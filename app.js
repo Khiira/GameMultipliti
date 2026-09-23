@@ -204,6 +204,9 @@ const PEKE_TRY_AGAIN = [
   "¡Buen intento! Miremos el dibujo."
 ];
 
+let isParentUnlocked = false;
+let currentParentChallenge = null;
+
 // --- INICIALIZACIÓN AL CARGAR LA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
@@ -211,10 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setupVoiceToggle();
   updateHomeWelcome();
 
-  // Iniciar Peke 3D si Three.js está listo
+  // Iniciar Peke 3D en el banner principal para que sea visible de inmediato
   if (typeof initPeke3D === 'function') {
     try {
-      initPeke3D('pekeAvatarBox');
+      initPeke3D('pekeHomeAvatarBox');
     } catch (e) {
       console.warn('3D initialization fallback to SVG', e);
     }
@@ -222,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderTablesGrid();
   renderPitagoricaTable();
+  renderPremiosRewardsShowcase();
   renderMedalsGrid();
   setupConfigView();
   renderTablesToggleGrid();
@@ -260,6 +264,22 @@ document.addEventListener('DOMContentLoaded', () => {
     closeTicketModal();
   });
 
+  // Botones del Modal de Desafío para Papá
+  const btnSubmitParent = document.getElementById('btnSubmitParentChallenge');
+  if (btnSubmitParent) {
+    btnSubmitParent.addEventListener('click', submitParentChallenge);
+  }
+  const btnCancelParent = document.getElementById('btnCancelParentChallenge');
+  if (btnCancelParent) {
+    btnCancelParent.addEventListener('click', closeParentChallengeModal);
+  }
+  const inputParent = document.getElementById('inputParentAnswer');
+  if (inputParent) {
+    inputParent.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitParentChallenge();
+    });
+  }
+
   // Botón reiniciar datos
   document.getElementById('btnResetProgress').addEventListener('click', () => {
     if (confirm('¿Segura que quieres reiniciar tu avance de semillitas y estrellas?')) {
@@ -267,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       saveState();
       renderTablesGrid();
       renderMedalsGrid();
+      renderPremiosRewardsShowcase();
       renderTablesToggleGrid();
       renderCustomRewardsList();
       alert('¡Listo! Empezamos una nueva aventura.');
@@ -286,8 +307,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupNavigation() {
   const tabs = document.querySelectorAll('.nav-tab');
   tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
+    tab.addEventListener('click', (e) => {
       const targetView = tab.getAttribute('data-view');
+      // Proteger Ajustes con el Desafío de Papá
+      if (targetView === 'view-config' && !isParentUnlocked) {
+        e.preventDefault();
+        openParentChallengeModal();
+        return;
+      }
       switchView(targetView);
     });
   });
@@ -311,9 +338,21 @@ function switchView(viewId) {
     targetSection.classList.add('active');
   }
 
+  // Mover Peke 3D al contenedor de la vista activa
+  if (typeof movePeke3D === 'function') {
+    if (viewId === 'view-play') {
+      movePeke3D('pekeAvatarBox');
+    } else if (viewId === 'view-tables') {
+      movePeke3D('pekeHomeAvatarBox');
+    }
+  }
+
   // Refrescar grillas al navegar
   if (viewId === 'view-tables') renderTablesGrid();
-  if (viewId === 'view-premios') renderMedalsGrid();
+  if (viewId === 'view-premios') {
+    renderPremiosRewardsShowcase();
+    renderMedalsGrid();
+  }
   if (viewId === 'view-config') {
     renderTablesToggleGrid();
     renderCustomRewardsList();
@@ -1045,6 +1084,121 @@ function renderCustomRewardsList() {
   });
 }
 
+function renderPremiosRewardsShowcase() {
+  const container = document.getElementById('premiosRewardsShowcase');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!Array.isArray(gameState.customRewards) || gameState.customRewards.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-muted); font-style: italic; padding: 12px 0;">Aún no hay premios configurados. ¡Pídele a papá que cree premios en la pestaña de Ajustes!</p>';
+    return;
+  }
+
+  const currentStars = gameState.stars || 0;
+
+  gameState.customRewards.forEach(reward => {
+    const card = document.createElement('div');
+    const canRedeem = currentStars >= reward.costStars;
+    const progressPercent = Math.min(100, Math.round((currentStars / reward.costStars) * 100));
+
+    let cardClass = 'reward-card';
+    if (reward.redeemed) cardClass += ' redeemed';
+    else if (canRedeem) cardClass += ' can-redeem';
+
+    let actionBtnHtml = '';
+    if (reward.redeemed) {
+      actionBtnHtml = `
+        <button class="btn-redeem" onclick="viewTicket(${reward.id})" style="background: #3B82F6;">
+          🎟️ Ver Diploma
+        </button>
+      `;
+    } else if (canRedeem) {
+      actionBtnHtml = `
+        <button class="btn-redeem" onclick="redeemReward(${reward.id})" style="background: #10B981; font-weight: 900; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+          ✨ ¡Canjear con Papá!
+        </button>
+      `;
+    }
+
+    card.className = cardClass;
+    card.innerHTML = `
+      <div class="reward-icon-box">${reward.icon || '🎁'}</div>
+      <div class="reward-info">
+        <div class="reward-title-row">
+          <span class="reward-title">${reward.title}</span>
+          <span class="reward-cost">⭐ ${reward.costStars}</span>
+        </div>
+        <div class="reward-progress-bar">
+          <div class="reward-progress-fill" style="width: ${progressPercent}%;"></div>
+        </div>
+        <div class="reward-status-text">
+          ${reward.redeemed 
+            ? '✅ ¡Premio canjeado con éxito! Muéstraselo a papá.' 
+            : canRedeem 
+              ? '🎉 ¡Meta alcanzada! Toca el botón para canjear tu vale con papá.' 
+              : `Llevas ${currentStars}/${reward.costStars} estrellas (¡te faltan ${reward.costStars - currentStars}! 🌻)`}
+        </div>
+      </div>
+      ${actionBtnHtml}
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+// --- DESAFÍO MATEMÁTICO PARA PAPÁ (CONTROL PARENTAL) ---
+function openParentChallengeModal() {
+  playClickSound();
+  const modal = document.getElementById('modalParentChallenge');
+  const expEl = document.getElementById('parentChallengeExp');
+  const inputEl = document.getElementById('inputParentAnswer');
+  const errorEl = document.getElementById('parentChallengeError');
+
+  // Generar reto de cálculo para adultos
+  const a = Math.floor(Math.random() * 45) + 38; // 38..82
+  const b = Math.floor(Math.random() * 45) + 29; // 29..73
+  const isSum = Math.random() > 0.3;
+
+  if (isSum) {
+    currentParentChallenge = { exp: `${a} + ${b} = ?`, answer: a + b };
+  } else {
+    const big = Math.max(a, b) + 40;
+    const small = Math.min(a, b);
+    currentParentChallenge = { exp: `${big} - ${small} = ?`, answer: big - small };
+  }
+
+  expEl.textContent = currentParentChallenge.exp;
+  inputEl.value = '';
+  errorEl.classList.add('hidden');
+  modal.classList.remove('hidden');
+
+  setTimeout(() => inputEl.focus(), 100);
+}
+
+function closeParentChallengeModal() {
+  document.getElementById('modalParentChallenge').classList.add('hidden');
+}
+
+function submitParentChallenge() {
+  const inputEl = document.getElementById('inputParentAnswer');
+  const errorEl = document.getElementById('parentChallengeError');
+  const userVal = parseInt(inputEl.value, 10);
+
+  if (currentParentChallenge && userVal === currentParentChallenge.answer) {
+    playSuccessSound();
+    isParentUnlocked = true;
+    closeParentChallengeModal();
+    switchView('view-config');
+  } else {
+    playTryAgainSound();
+    errorEl.classList.remove('hidden');
+    setTimeout(() => {
+      openParentChallengeModal();
+      document.getElementById('parentChallengeError').classList.remove('hidden');
+    }, 600);
+  }
+}
+
 function redeemReward(rewardId) {
   const reward = gameState.customRewards.find(r => r.id === rewardId);
   if (!reward) return;
@@ -1053,6 +1207,10 @@ function redeemReward(rewardId) {
   saveState();
   playWinFanfare();
   triggerConfetti();
+
+  if (typeof speakPeke === 'function') {
+    speakPeke(`¡Felicitaciones, ${gameState.studentName || 'Isabella'}! ¡Canjeaste tu vale de ${reward.title}!`);
+  }
 
   viewTicket(rewardId);
 }
@@ -1071,6 +1229,7 @@ function viewTicket(rewardId) {
 function closeTicketModal() {
   document.getElementById('modalTicket').classList.add('hidden');
   renderCustomRewardsList();
+  renderPremiosRewardsShowcase();
 }
 
 function deleteReward(rewardId) {
@@ -1078,6 +1237,7 @@ function deleteReward(rewardId) {
     gameState.customRewards = gameState.customRewards.filter(r => r.id !== rewardId);
     saveState();
     renderCustomRewardsList();
+    renderPremiosRewardsShowcase();
   }
 }
 

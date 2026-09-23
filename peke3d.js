@@ -12,40 +12,44 @@ let isPekeJumping = false;
 let pekeTargetRotation = { x: 0, y: 0 };
 let pekeVoiceEnabled = true;
 
+let currentContainerId = null;
+
 // Inicializar Peke 3D
-function initPeke3D(containerId = 'pekeAvatarBox') {
+function initPeke3D(containerId = 'pekeHomeAvatarBox') {
   const container = document.getElementById(containerId);
   if (!container || typeof THREE === 'undefined') return;
 
-  // Limpiar SVG estático si existe
+  currentContainerId = containerId;
   container.innerHTML = '';
 
-  const width = container.clientWidth || 105;
-  const height = container.clientHeight || 105;
+  const width = Math.max(115, container.clientWidth || 115);
+  const height = Math.max(115, container.clientHeight || 115);
 
   // Escena
   pekeScene = new THREE.Scene();
 
   // Cámara
   pekeCamera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-  pekeCamera.position.set(0, 0.4, 4.2);
+  pekeCamera.position.set(0, 0.35, 4.2);
 
   // Renderer con fondo transparente
-  pekeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  pekeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
   pekeRenderer.setSize(width, height);
-  pekeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  pekeRenderer.shadowMap.enabled = true;
+  pekeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  pekeRenderer.domElement.style.width = '100%';
+  pekeRenderer.domElement.style.height = '100%';
+  pekeRenderer.domElement.style.display = 'block';
   container.appendChild(pekeRenderer.domElement);
 
   // Luces suaves estilo cartoon / Pixar
-  const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.9);
+  const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.0);
   pekeScene.add(ambientLight);
 
-  const keyLight = new THREE.DirectionalLight(0xFFF3E0, 1.1);
+  const keyLight = new THREE.DirectionalLight(0xFFF3E0, 1.2);
   keyLight.position.set(2, 3, 3);
   pekeScene.add(keyLight);
 
-  const fillLight = new THREE.DirectionalLight(0xFFD180, 0.5);
+  const fillLight = new THREE.DirectionalLight(0xFFD180, 0.6);
   fillLight.position.set(-2, 1, 2);
   pekeScene.add(fillLight);
 
@@ -58,6 +62,29 @@ function initPeke3D(containerId = 'pekeAvatarBox') {
 
   // Bucle de animación 60fps
   animatePeke3D();
+}
+
+function movePeke3D(targetContainerId) {
+  if (!pekeRenderer || !pekeRenderer.domElement) {
+    initPeke3D(targetContainerId);
+    return;
+  }
+  const target = document.getElementById(targetContainerId);
+  if (!target) return;
+
+  target.innerHTML = '';
+  target.appendChild(pekeRenderer.domElement);
+  currentContainerId = targetContainerId;
+
+  const width = Math.max(110, target.clientWidth || 110);
+  const height = Math.max(110, target.clientHeight || 110);
+  if (pekeCamera) {
+    pekeCamera.aspect = width / height;
+    pekeCamera.updateProjectionMatrix();
+  }
+  if (pekeRenderer) {
+    pekeRenderer.setSize(width, height);
+  }
 }
 
 function buildHamsterModel() {

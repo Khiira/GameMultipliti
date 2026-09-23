@@ -69,7 +69,7 @@
     <!-- VISTA 1: Selector de Tablas (1 al 12) -->
     <section id="view-tables" class="view-section active">
       <div class="peke-banner">
-        <div class="peke-mini-avatar">
+        <div class="peke-mini-avatar" id="pekeHomeAvatarBox">
           <svg class="hamster-svg mini" viewBox="0 0 120 120">
             <!-- Orejitas -->
             <ellipse cx="35" cy="30" rx="14" ry="16" fill="#F4A261" />
@@ -255,10 +255,29 @@
     <!-- VISTA 5: Premios y Medallas de Peke -->
     <section id="view-premios" class="view-section">
       <div class="premios-header">
-        <h2>🏆 Vitrina de Logros de Peke</h2>
-        <p>¡Colecciona todas las medallas practicando cada día!</p>
+        <h2>🏆 Vitrina de Premios y Logros</h2>
+        <p>¡Gana estrellas estudiando para canjear tus vales con papá y coleccionar medallas!</p>
       </div>
 
+      <!-- Sección 1: Vales de Papá para Isabella -->
+      <div class="vales-showcase-box">
+        <div class="vales-box-title">
+          <span>🎁</span>
+          <h3>Tus Vales y Premios de Papá</h3>
+        </div>
+        <p class="vales-box-desc">
+          ¡Junta estrellas jugando para ganar estos premios en la vida real!
+        </p>
+        <div class="custom-rewards-showcase" id="premiosRewardsShowcase">
+          <!-- Renderizado dinámicamente para Isabella con barra de progreso y botón Canjear -->
+        </div>
+      </div>
+
+      <!-- Sección 2: Medallas de Honor de Peke -->
+      <div class="medallas-box-title">
+        <span>🏅</span>
+        <h3>Medallas de Maestría</h3>
+      </div>
       <div class="medals-grid" id="medalsGrid">
         <!-- Generado dinámicamente -->
       </div>
@@ -393,6 +412,40 @@
         </button>
         <button id="btnWinBackMenu" class="btn-secondary">
           <span>🏠</span> Ir al menú
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DESAFÍO PARA PAPÁ (Control Parental) -->
+  <div id="modalParentChallenge" class="modal-backdrop hidden">
+    <div class="modal-card parent-challenge-card">
+      <div class="ticket-badge" style="background: #FEE2E2; border-color: #FCA5A5; color: #991B1B;">
+        🔒 CONTROL PARENTAL
+      </div>
+      <h2 style="color: #991B1B; margin-bottom: 8px;">Desafío para Papá 🧠</h2>
+      <p style="color: #4B5563; font-size: 0.95rem; margin-bottom: 16px;">
+        Para configurar las tablas y premios de Isabella, resuelve este cálculo:
+      </p>
+
+      <div class="parent-math-box" style="background: #FFF7ED; border: 2px solid #FDBA74; border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+        <span id="parentChallengeExp" style="font-size: 2.2rem; font-weight: 900; color: #C2410C;">47 + 68 = ?</span>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <input type="number" id="inputParentAnswer" class="text-input" placeholder="Tu respuesta..." style="text-align: center; font-size: 1.6rem; font-weight: 900; max-width: 200px; margin: 0 auto; display: block;">
+      </div>
+
+      <div id="parentChallengeError" class="challenge-error hidden" style="color: #DC2626; font-weight: 800; font-size: 0.9rem; margin-bottom: 14px;">
+        ¡Cálculo incorrecto! Intenta con este nuevo desafío.
+      </div>
+
+      <div class="modal-buttons">
+        <button id="btnSubmitParentChallenge" class="btn-primary" style="background: #EA580C;">
+          <span>🔓</span> Desbloquear Ajustes
+        </button>
+        <button id="btnCancelParentChallenge" class="btn-secondary">
+          <span>✕</span> Cancelar
         </button>
       </div>
     </div>
