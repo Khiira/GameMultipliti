@@ -186,7 +186,8 @@ let currentGame = {
   currentIndex: 0,
   currentAnswer: '',
   errorsThisRound: 0,
-  firstTrySuccessCount: 0
+  firstTrySuccessCount: 0,
+  isTransitioning: false
 };
 
 function getPekeCheer() {
@@ -534,6 +535,7 @@ function loadQuestion() {
   }
 
   currentGame.currentAnswer = '';
+  currentGame.isTransitioning = false;
   updateAnswerDisplay();
 
   // Actualizar números en pantalla
@@ -576,6 +578,7 @@ function updateAnswerDisplay() {
 }
 
 // --- GESTIÓN DEL TECLADO NUMÉRICO TÁCTIL ---
+// --- GESTIÓN DEL TECLADO NUMÉRICO TÁCTIL ---
 function setupKeypad() {
   const keys = document.querySelectorAll('.key-btn');
   keys.forEach(btn => {
@@ -587,6 +590,9 @@ function setupKeypad() {
 }
 
 function handleKeyInput(key) {
+  // Ignorar toques si estamos en transición o celebrando respuesta correcta
+  if (currentGame.isTransitioning) return;
+
   playClickSound();
 
   if (key === 'clear') {
@@ -607,6 +613,7 @@ function handlePhysicalKeyboard(e) {
   // Solo procesar si estamos en la vista de juego
   const playView = document.getElementById('view-play');
   if (!playView || !playView.classList.contains('active')) return;
+  if (currentGame.isTransitioning) return;
 
   if (e.key >= '0' && e.key <= '9') {
     handleKeyInput(e.key);
@@ -619,14 +626,21 @@ function handlePhysicalKeyboard(e) {
 
 // --- COMPROBAR RESPUESTA ---
 function submitAnswer() {
+  // Protección contra dobles clics o toques rápidos repetidos
+  if (currentGame.isTransitioning) return;
   if (currentGame.currentAnswer === '') return;
 
   const q = currentGame.questions[currentGame.currentIndex];
+  if (!q) return;
+
   const userNum = parseInt(currentGame.currentAnswer, 10);
   const avatarBox = document.getElementById('pekeAvatarBox');
   const dialogue = document.getElementById('pekeDialogue');
 
   if (userNum === q.result) {
+    // BLOQUEO INMEDIATO: Evita que pulsaciones rápidas salten preguntas
+    currentGame.isTransitioning = true;
+
     // ¡RESPUESTA CORRECTA! 🎉
     playSuccessSound();
 
@@ -646,7 +660,7 @@ function submitAnswer() {
     const randomCheer = getPekeCheer();
     dialogue.textContent = randomCheer;
     if (typeof speakPeke === 'function') {
-      speakPeke(randomCheer);
+      speakPeke(randomCheer, 'happy');
     }
 
     checkMedals();
@@ -655,7 +669,7 @@ function submitAnswer() {
     setTimeout(() => {
       currentGame.currentIndex++;
       loadQuestion();
-    }, 750);
+    }, 700);
 
   } else {
     // RESPUESTA INCORRECTA (AMABLE Y SIN FRUSTRACIÓN) ❤️

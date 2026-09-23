@@ -1,5 +1,5 @@
 // Service Worker para funcionamiento 100% offline
-const CACHE_NAME = 'peke-tablas-cache-v4';
+const CACHE_NAME = 'peke-tablas-cache-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
