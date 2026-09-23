@@ -60,6 +60,23 @@ function initPeke3D(containerId = 'pekeHomeAvatarBox') {
   window.addEventListener('mousemove', onMouseMovePeke);
   window.addEventListener('touchmove', onTouchMovePeke);
 
+  // Tap o clic interactivo sobre Peke
+  pekeRenderer.domElement.style.cursor = 'pointer';
+  pekeRenderer.domElement.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onPekeTapped();
+  });
+  let pekeTouchStartTime = 0;
+  pekeRenderer.domElement.addEventListener('touchstart', () => {
+    pekeTouchStartTime = Date.now();
+  }, { passive: true });
+  pekeRenderer.domElement.addEventListener('touchend', (e) => {
+    if (Date.now() - pekeTouchStartTime < 350) {
+      e.stopPropagation();
+      onPekeTapped();
+    }
+  });
+
   // Bucle de animación 60fps
   animatePeke3D();
 }
@@ -305,11 +322,15 @@ function animatePeke3D() {
       }
     }
 
-    // 4. Animación de habla (mueve la boca y cabecita si isSpeaking = true)
+    // 4. Animación de habla y ruiditos (mueve la boca, orejitas y bigotes si isSpeaking = true)
     if (pekeMouth) {
       if (isSpeaking) {
-        pekeMouth.scale.y = 1.2 + Math.sin(clock * 18) * 0.9;
-        pekeMouth.scale.x = 1.0 + Math.cos(clock * 14) * 0.3;
+        pekeMouth.scale.y = 1.35 + Math.sin(clock * 24) * 0.85;
+        pekeMouth.scale.x = 0.95 + Math.cos(clock * 18) * 0.35;
+        if (pekeLeftEar && pekeRightEar) {
+          pekeLeftEar.rotation.z = 0.25 + Math.sin(clock * 22) * 0.09;
+          pekeRightEar.rotation.z = -0.25 - Math.sin(clock * 22) * 0.09;
+        }
       } else {
         pekeMouth.scale.y = 0.6;
         pekeMouth.scale.x = 1.2;
@@ -346,48 +367,198 @@ function triggerPekeJump() {
   }, 20);
 }
 
-// ========================================================
-// MOTOR DE VOZ REAL OFFLINE (Web Speech API)
-// ========================================================
-function speakPeke(text) {
-  if (!pekeVoiceEnabled || !('speechSynthesis' in window)) return;
+// Interacción al tocar a Peke (Tap en el celular o clic con mouse)
+function onPekeTapped() {
+  triggerPekeJump();
+  playHamsterSound('happy');
 
-  try {
-    window.speechSynthesis.cancel(); // Detener cualquier frase anterior
+  const student = (typeof gameState !== 'undefined' && gameState.studentName) ? gameState.studentName : 'Isabella';
+  const homeSpeech = document.getElementById('pekeHomeMsg');
+  const dialogue = document.getElementById('pekeDialogue');
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.05;  // Velocidad alegre y natural
-    utterance.pitch = 1.25; // Tono ligeramente más agudo y tierno para un hámster simpático
+  const squeakQuotes = [
+    `¡Pip-pip! 🐹 ¡Hola ${student}! ¡Amo las semillitas de girasol!`,
+    `¡Squee! 🌻 ¿Practicamos otra tabla hoy? ¡Eres súper inteligente!`,
+    `¡Nom-nom! 🐹 ¡Cada tabla dominada te acerca a un gran premio!`,
+    `¡Pip-squeak! ⭐ ¡Qué divertido estudiar juntos, ${student}!`
+  ];
+  const chosenQuote = squeakQuotes[Math.floor(Math.random() * squeakQuotes.length)];
 
-    // Buscar una voz en español disponible en el dispositivo
-    const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es') || v.name.includes('Spanish') || v.name.includes('Español'));
-    if (spanishVoice) {
-      utterance.voice = spanishVoice;
-    }
-
-    utterance.onstart = () => {
-      isSpeaking = true;
-    };
-
-    utterance.onend = () => {
-      isSpeaking = false;
-    };
-
-    utterance.onerror = () => {
-      isSpeaking = false;
-    };
-
-    window.speechSynthesis.speak(utterance);
-  } catch (err) {
-    console.warn('Error en síntesis de voz:', err);
-    isSpeaking = false;
+  if (homeSpeech && currentContainerId === 'pekeHomeAvatarBox') {
+    homeSpeech.innerHTML = chosenQuote;
+  } else if (dialogue && currentContainerId === 'pekeAvatarBox') {
+    dialogue.textContent = `¡Pip-pip! 🐹 ¡Tú puedes, ${student}!`;
   }
 }
 
-// Precargar voces del navegador
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    window.speechSynthesis.getVoices();
-  };
+// ========================================================
+// MOTOR DE RUIDOS Y CHIRRIDOS DE HÁMSTER REALES (Web Audio API)
+// 100% Offline, cero robots, adorables squeaks & chirps cartoon
+// ========================================================
+let hamsterAudioCtx = null;
+
+function getHamsterAudioContext() {
+  if (typeof audioCtx !== 'undefined' && audioCtx) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  if (!hamsterAudioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      hamsterAudioCtx = new AudioContextClass();
+    }
+  }
+  if (hamsterAudioCtx && hamsterAudioCtx.state === 'suspended') {
+    hamsterAudioCtx.resume();
+  }
+  return hamsterAudioCtx;
+}
+
+// Chirrido agudo tierno individual de hámster
+function playSingleChirp(startFreq, peakFreq, endFreq, duration, delay = 0, volume = 0.22) {
+  const ctx = getHamsterAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime + delay;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  // Tipo 'sine' para sonido suave y dulce
+  osc.type = 'sine';
+
+  // Modulación rápida de frecuencia característica de roedores
+  osc.frequency.setValueAtTime(startFreq, now);
+  osc.frequency.exponentialRampToValueAtTime(peakFreq, now + duration * 0.45);
+  osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.linearRampToValueAtTime(volume, now + duration * 0.15);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + duration);
+}
+
+// Mordisquito masticando semillitas ("ñam-ñam")
+function playNibbleSound(delay = 0) {
+  const ctx = getHamsterAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime + delay;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(950, now);
+  osc.frequency.exponentialRampToValueAtTime(450, now + 0.04);
+
+  gain.gain.setValueAtTime(0.18, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.05);
+}
+
+function playHamsterSound(type = 'greet') {
+  if (typeof gameState !== 'undefined' && gameState.audio === false) return;
+  if (!pekeVoiceEnabled) return;
+
+  const ctx = getHamsterAudioContext();
+  if (!ctx) return;
+
+  isSpeaking = true;
+  let totalDuration = 350;
+
+  switch (type) {
+    case 'greet':
+      // "¡Pip-pip!" Doble chirrido simpático y agudo
+      playSingleChirp(1300, 1900, 1400, 0.08, 0.00, 0.22);
+      playSingleChirp(1500, 2200, 1600, 0.09, 0.11, 0.25);
+      totalDuration = 300;
+      break;
+
+    case 'happy':
+    case 'cheer':
+    case 'correct':
+      // "¡Chirp-chirp-squee!" Tres chirridos alegres ascendentes
+      playSingleChirp(1200, 1750, 1350, 0.07, 0.00, 0.20);
+      playSingleChirp(1450, 2050, 1550, 0.07, 0.09, 0.23);
+      playSingleChirp(1700, 2500, 1850, 0.12, 0.18, 0.26);
+      totalDuration = 420;
+      break;
+
+    case 'nomnom':
+    case 'munch':
+      // Cuatro mordisquitos rápidos de semillita "¡ñam-ñam-ñam-ñam!"
+      playNibbleSound(0.00);
+      playNibbleSound(0.07);
+      playNibbleSound(0.14);
+      playNibbleSound(0.21);
+      playSingleChirp(1400, 1800, 1300, 0.08, 0.28, 0.18);
+      totalDuration = 450;
+      break;
+
+    case 'encourage':
+    case 'try_again':
+      // Pip tierno y suave de aliento "Pip-uh..."
+      playSingleChirp(980, 1150, 820, 0.16, 0.00, 0.18);
+      playSingleChirp(850, 950, 720, 0.18, 0.15, 0.15);
+      totalDuration = 400;
+      break;
+
+    case 'curious':
+    case 'question':
+      // "¿Pik?" Pregunta curiosa con inflexión hacia arriba
+      playSingleChirp(1100, 1850, 1600, 0.10, 0.00, 0.20);
+      totalDuration = 220;
+      break;
+
+    case 'victory':
+    case 'celebrate':
+      // Fanfarria de chirridos de hámster súper feliz
+      playSingleChirp(1100, 1600, 1200, 0.06, 0.00, 0.20);
+      playSingleChirp(1300, 1850, 1400, 0.06, 0.08, 0.22);
+      playSingleChirp(1500, 2100, 1600, 0.07, 0.16, 0.24);
+      playSingleChirp(1800, 2600, 1950, 0.12, 0.25, 0.27);
+      totalDuration = 500;
+      break;
+
+    default:
+      playSingleChirp(1200, 1800, 1350, 0.09, 0.00, 0.22);
+      totalDuration = 250;
+      break;
+  }
+
+  setTimeout(() => {
+    isSpeaking = false;
+  }, totalDuration);
+}
+
+// Función principal llamada al hablar o reaccionar Peke
+function speakPeke(text, soundType = null) {
+  if (!pekeVoiceEnabled) return;
+
+  let type = soundType;
+  if (!type && typeof text === 'string') {
+    const lower = text.toLowerCase();
+    if (lower.includes('increíble') || lower.includes('increible') || lower.includes('excelente') || lower.includes('¡bien!') || lower.includes('genial') || lower.includes('felicitaciones')) {
+      type = 'happy';
+    } else if (lower.includes('casi') || lower.includes('intenta') || lower.includes('puedes') || lower.includes('revisa')) {
+      type = 'encourage';
+    } else if (lower.includes('hola') || lower.includes('aquí') || lower.includes('a practicar')) {
+      type = 'greet';
+    } else if (lower.includes('conquistaste') || lower.includes('completaste') || lower.includes('canjeaste')) {
+      type = 'victory';
+    } else {
+      type = 'curious';
+    }
+  }
+
+  playHamsterSound(type || 'greet');
 }

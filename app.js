@@ -397,8 +397,8 @@ function setupVoiceToggle() {
 
   function updateVoiceIcon() {
     const isVOn = typeof pekeVoiceEnabled !== 'undefined' ? pekeVoiceEnabled : true;
-    icon.textContent = isVOn ? '🗣️' : '🤐';
-    btn.setAttribute('title', isVOn ? 'Voz de Peke activada' : 'Voz de Peke silenciada');
+    icon.textContent = isVOn ? '🐹' : '💤';
+    btn.setAttribute('title', isVOn ? 'Ruidos de Peke activados (toca para silenciar)' : 'Peke durmiendo (toca para activar ruidos)');
   }
 
   updateVoiceIcon();
@@ -409,8 +409,8 @@ function setupVoiceToggle() {
       gameState.voice = pekeVoiceEnabled;
       saveState();
       updateVoiceIcon();
-      if (pekeVoiceEnabled && typeof speakPeke === 'function') {
-        speakPeke(`¡Hola, ${gameState.studentName || 'Isabella'}! ¡Aquí estoy!`);
+      if (pekeVoiceEnabled && typeof playHamsterSound === 'function') {
+        playHamsterSound('happy');
       }
     }
   });
