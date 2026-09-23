@@ -1667,6 +1667,28 @@ body {
   border: 3px solid #FCA5A5;
 }
 
+.btn-change-calc {
+  background: #FFF7ED;
+  border: 1px solid #FDBA74;
+  color: #C2410C;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.btn-change-calc:hover {
+  background: #FFEDD5;
+  color: #9A3412;
+  transform: translateY(-1px);
+}
+
 /* ========================================================
    RESPONSIVE COMPLETO PARA SMARTPHONES & TABLETS
    Optimizado para pantallas desde 320px hasta 768px

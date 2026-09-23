@@ -294,10 +294,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnCancelParent) {
     btnCancelParent.addEventListener('click', closeParentChallengeModal);
   }
+  const btnNewParent = document.getElementById('btnNewParentChallenge');
+  if (btnNewParent) {
+    btnNewParent.addEventListener('click', () => {
+      playClickSound();
+      generateNewParentChallenge();
+    });
+  }
   const inputParent = document.getElementById('inputParentAnswer');
   if (inputParent) {
     inputParent.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') submitParentChallenge();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitParentChallenge();
+      }
     });
   }
 
@@ -1194,56 +1204,90 @@ function renderPremiosRewardsShowcase() {
 }
 
 // --- DESAFÍO MATEMÁTICO PARA PAPÁ (CONTROL PARENTAL) ---
-function openParentChallengeModal() {
-  playClickSound();
-  const modal = document.getElementById('modalParentChallenge');
+function generateNewParentChallenge() {
   const expEl = document.getElementById('parentChallengeExp');
   const inputEl = document.getElementById('inputParentAnswer');
   const errorEl = document.getElementById('parentChallengeError');
 
-  // Generar reto de cálculo para adultos
+  // Generar reto de cálculo mental de 2 dígitos
   const a = Math.floor(Math.random() * 45) + 38; // 38..82
-  const b = Math.floor(Math.random() * 45) + 29; // 29..73
-  const isSum = Math.random() > 0.3;
+  const b = Math.floor(Math.random() * 45) + 25; // 25..69
+  const isSum = Math.random() > 0.35;
 
   if (isSum) {
     currentParentChallenge = { exp: `${a} + ${b} = ?`, answer: a + b };
   } else {
-    const big = Math.max(a, b) + 40;
+    const big = Math.max(a, b) + 35;
     const small = Math.min(a, b);
     currentParentChallenge = { exp: `${big} - ${small} = ?`, answer: big - small };
   }
 
-  expEl.textContent = currentParentChallenge.exp;
-  inputEl.value = '';
-  errorEl.classList.add('hidden');
-  modal.classList.remove('hidden');
+  if (expEl) expEl.textContent = currentParentChallenge.exp;
+  if (inputEl) {
+    inputEl.value = '';
+    inputEl.focus();
+  }
+  if (errorEl) {
+    errorEl.classList.add('hidden');
+    errorEl.textContent = '❌ ¡Cálculo incorrecto! Intenta otra vez.';
+  }
+}
 
-  setTimeout(() => inputEl.focus(), 100);
+function openParentChallengeModal() {
+  playClickSound();
+  const modal = document.getElementById('modalParentChallenge');
+  generateNewParentChallenge();
+  if (modal) modal.classList.remove('hidden');
+
+  const inputEl = document.getElementById('inputParentAnswer');
+  if (inputEl) setTimeout(() => inputEl.focus(), 120);
+}
+
+function hideParentChallengeModal() {
+  const modal = document.getElementById('modalParentChallenge');
+  const errorEl = document.getElementById('parentChallengeError');
+  const inputEl = document.getElementById('inputParentAnswer');
+  if (modal) modal.classList.add('hidden');
+  if (errorEl) errorEl.classList.add('hidden');
+  if (inputEl) inputEl.value = '';
 }
 
 function closeParentChallengeModal() {
+  // Cancelación explícita por el usuario
   isParentUnlocked = false;
-  document.getElementById('modalParentChallenge').classList.add('hidden');
+  hideParentChallengeModal();
 }
 
 function submitParentChallenge() {
   const inputEl = document.getElementById('inputParentAnswer');
   const errorEl = document.getElementById('parentChallengeError');
-  const userVal = parseInt(inputEl.value, 10);
+  if (!inputEl) return;
+
+  const rawVal = inputEl.value.trim();
+  if (rawVal === '') {
+    playTryAgainSound();
+    if (errorEl) {
+      errorEl.textContent = '⚠️ Por favor escribe tu respuesta.';
+      errorEl.classList.remove('hidden');
+    }
+    inputEl.focus();
+    return;
+  }
+
+  const userVal = parseInt(rawVal, 10);
 
   if (currentParentChallenge && userVal === currentParentChallenge.answer) {
     playSuccessSound();
-    isParentUnlocked = true;
-    closeParentChallengeModal();
-    switchView('view-config');
+    isParentUnlocked = true; // Desbloquear permiso para ingresar a view-config
+    hideParentChallengeModal(); // Ocultar modal sin revocar permiso
+    switchView('view-config'); // Navegar a ajustes fluidamente
   } else {
     playTryAgainSound();
-    errorEl.classList.remove('hidden');
-    setTimeout(() => {
-      openParentChallengeModal();
-      document.getElementById('parentChallengeError').classList.remove('hidden');
-    }, 600);
+    if (errorEl) {
+      errorEl.textContent = '❌ ¡Cálculo incorrecto! Intenta otra vez o toca "Cambiar cálculo".';
+      errorEl.classList.remove('hidden');
+    }
+    inputEl.select(); // Selecciona el texto para que pueda escribir rápidamente sin borrar manualmente
   }
 }
 

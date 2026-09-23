@@ -493,16 +493,22 @@
         Para configurar las tablas y premios de Isabella, resuelve este cálculo:
       </p>
 
-      <div class="parent-math-box" style="background: #FFF7ED; border: 2px solid #FDBA74; border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+      <div class="parent-math-box" style="background: #FFF7ED; border: 2px solid #FDBA74; border-radius: 14px; padding: 16px; margin-bottom: 8px;">
         <span id="parentChallengeExp" style="font-size: 2.2rem; font-weight: 900; color: #C2410C;">47 + 68 = ?</span>
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <input type="number" id="inputParentAnswer" class="text-input" placeholder="Tu respuesta..." style="text-align: center; font-size: 1.6rem; font-weight: 900; max-width: 200px; margin: 0 auto; display: block;">
+      <div style="margin-bottom: 14px;">
+        <button type="button" id="btnNewParentChallenge" class="btn-change-calc" title="Generar otro cálculo">
+          🔄 Cambiar cálculo
+        </button>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <input type="number" id="inputParentAnswer" class="text-input" placeholder="Tu respuesta..." style="text-align: center; font-size: 1.6rem; font-weight: 900; max-width: 200px; margin: 0 auto; display: block;" autocomplete="off">
       </div>
 
       <div id="parentChallengeError" class="challenge-error hidden" style="color: #DC2626; font-weight: 800; font-size: 0.9rem; margin-bottom: 14px;">
-        ¡Cálculo incorrecto! Intenta con este nuevo desafío.
+        ❌ ¡Cálculo incorrecto! Intenta otra vez.
       </div>
 
       <div class="modal-buttons">
