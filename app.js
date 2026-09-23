@@ -270,6 +270,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnCloseTicket').addEventListener('click', () => {
     closeTicketModal();
   });
+  const btnShare = document.getElementById('btnShareTicket');
+  if (btnShare) {
+    btnShare.addEventListener('click', shareTicket);
+  }
+
+  // Botones de Respaldo entre Navegadores
+  const btnExport = document.getElementById('btnExportProgress');
+  if (btnExport) {
+    btnExport.addEventListener('click', exportProgress);
+  }
+  const btnImport = document.getElementById('btnImportProgress');
+  if (btnImport) {
+    btnImport.addEventListener('click', importProgress);
+  }
 
   // Botones del Modal de Desafío para Papá
   const btnSubmitParent = document.getElementById('btnSubmitParentChallenge');
@@ -1271,6 +1285,89 @@ function deleteReward(rewardId) {
     saveState();
     renderCustomRewardsList();
     renderPremiosRewardsShowcase();
+  }
+}
+
+// --- COMPARTIR TICKET DE PREMIO OFICIAL (WEB SHARE API) ---
+async function shareTicket() {
+  playClickSound();
+  const rewardTitle = document.getElementById('ticketRewardTitle').textContent || 'Premio de Peke';
+  const student = gameState.studentName || 'Isabella';
+  const shareText = `🎉 ¡Mira papá! Acabo de canjear mi vale oficial en Tablas con Peke 🐹: "${rewardTitle}". Firmado con amor por Peke la Hámster y Papá (Khiira). ¡Es hora de celebrarlo! ⭐`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `🎟️ Vale Oficial de ${student}`,
+        text: shareText,
+        url: window.location.origin || 'https://game-multipliti.vercel.app'
+      });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  // Fallback si no está disponible navigator.share
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert('📋 ¡Mensaje del vale copiado al portapapeles!\n\nAhora puedes abrir WhatsApp o tus mensajes y pegarlo para enviárselo a papá.');
+    }).catch(() => {
+      prompt('Copia este texto para enviarlo por WhatsApp a papá:', shareText);
+    });
+  } else {
+    prompt('Copia este texto para enviarlo por WhatsApp a papá:', shareText);
+  }
+}
+
+// --- RESPALDO Y TRANSFERENCIA DE AVANCE ENTRE NAVEGADORES O CELULARES ---
+function exportProgress() {
+  playClickSound();
+  try {
+    const dataStr = btoa(unescape(encodeURIComponent(JSON.stringify(gameState))));
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(dataStr).then(() => {
+        alert('📋 ¡Código de avance copiado con éxito!\n\nAhora abre el otro navegador (ej: Chrome o Samsung Internet) en este celular o en otro dispositivo, entra a Ajustes y presiona "Cargar Avance" para pegarlo.');
+      }).catch(() => {
+        prompt('Copia este código de avance para llevarlo al otro navegador:', dataStr);
+      });
+    } else {
+      prompt('Copia este código de avance para llevarlo al otro navegador:', dataStr);
+    }
+  } catch (err) {
+    alert('Error al generar el respaldo: ' + err.message);
+  }
+}
+
+function importProgress() {
+  playClickSound();
+  const code = prompt('Pega aquí el código de avance que copiaste del otro navegador:');
+  if (!code || !code.trim()) return;
+
+  try {
+    const jsonStr = decodeURIComponent(escape(atob(code.trim())));
+    const parsed = JSON.parse(jsonStr);
+
+    if (parsed && typeof parsed === 'object' && typeof parsed.studentName === 'string') {
+      gameState = {
+        ...defaultState,
+        ...parsed,
+        tables: parsed.tables || {},
+        medals: parsed.medals || [],
+        customRewards: Array.isArray(parsed.customRewards) && parsed.customRewards.length > 0 ? parsed.customRewards : defaultState.customRewards
+      };
+      saveState();
+      renderTablesGrid();
+      renderMedalsGrid();
+      renderPremiosRewardsShowcase();
+      renderTablesToggleGrid();
+      renderCustomRewardsList();
+      alert(`🎉 ¡Avance de ${gameState.studentName} restaurado con éxito!\nTienes ${gameState.seeds} semillitas y ${gameState.stars} estrellas.`);
+    } else {
+      alert('⚠️ El código ingresado no tiene un formato válido.');
+    }
+  } catch (err) {
+    alert('⚠️ Código no válido o dañado. Por favor intenta copiarlo de nuevo.');
   }
 }
 

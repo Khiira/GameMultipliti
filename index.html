@@ -371,6 +371,25 @@
         </div>
       </div>
 
+      <!-- Tarjeta 4: Respaldar o Pasar Avance a otro Navegador -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <span>🔄</span>
+          <h3>Pasar Avance a otro Navegador o Celular</h3>
+        </div>
+        <p class="config-desc">
+          Por seguridad de Android/iOS, cada navegador (Chrome, Samsung Internet) guarda los datos por separado. Usa estos botones para copiar el avance y pegarlo donde quieras sin perder nada:
+        </p>
+        <div class="backup-actions-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btnExportProgress" class="btn-secondary" style="font-weight: 800; flex: 1; min-width: 140px;">
+            <span>📋</span> Copiar mi Avance
+          </button>
+          <button id="btnImportProgress" class="btn-secondary" style="font-weight: 800; flex: 1; min-width: 140px;">
+            <span>📥</span> Cargar Avance
+          </button>
+        </div>
+      </div>
+
       <div class="reset-data-box">
         <button id="btnResetProgress" class="btn-text-danger" title="Reiniciar mi progreso">
           🔄 Reiniciar todo el avance (empezar de cero)
@@ -491,9 +510,14 @@
         </div>
       </div>
 
-      <button id="btnCloseTicket" class="btn-primary" style="margin-top: 20px; width: 100%;">
-        <span>🎉</span> ¡Guardar y Mostrar a Papá!
-      </button>
+      <div class="ticket-actions-box" style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
+        <button id="btnShareTicket" class="btn-primary" style="width: 100%; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">
+          <span>📤</span> Compartir Vale (WhatsApp / Mensaje)
+        </button>
+        <button id="btnCloseTicket" class="btn-secondary" style="width: 100%;">
+          <span>🎉</span> Guardar y Mostrar a Papá
+        </button>
+      </div>
     </div>
   </div>
 
