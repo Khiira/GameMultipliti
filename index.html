@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tablas de Multiplicar con Peke la Hámster 🐹</title>
+  <meta name="description" content="Aprende y diviértete con las tablas de multiplicar del 1 al 12 junto a Peke la Hámster. 100% sin conexión para 4° básico.">
+  <meta name="theme-color" content="#FFB74D">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Barra Superior -->
+  <header class="top-bar">
+    <div class="logo" id="btnLogo">
+      <span class="hamster-icon">🐹</span>
+      <div class="logo-text">
+        <h1>Tablas con Peke</h1>
+        <span class="subtitle">¡Aprende jugando!</span>
+      </div>
+    </div>
+
+    <div class="top-stats">
+      <div class="stat-badge seeds-badge" title="Semillitas de girasol recolectadas">
+        <span class="stat-icon">🌻</span>
+        <span id="counterSeeds" class="stat-num">0</span>
+      </div>
+      <div class="stat-badge stars-badge" title="Estrellas ganadas">
+        <span class="stat-icon">⭐</span>
+        <span id="counterStars" class="stat-num">0</span>
+      </div>
+      <button id="btnAudioToggle" class="icon-btn" title="Activar/Desactivar sonido" aria-label="Sonido">
+        <span id="audioIcon">🔊</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navegación Principal -->
+  <nav class="main-nav">
+    <button class="nav-tab active" data-view="view-tables">
+      <span class="nav-icon">🔢</span>
+      <span>Tablas 1 al 12</span>
+    </button>
+    <button class="nav-tab" data-view="view-desafio">
+      <span class="nav-icon">🎯</span>
+      <span>Desafío de Peke</span>
+    </button>
+    <button class="nav-tab" data-view="view-pitagorica">
+      <span class="nav-icon">📊</span>
+      <span>Tabla Mágica</span>
+    </button>
+    <button class="nav-tab" data-view="view-premios">
+      <span class="nav-icon">🏆</span>
+      <span>Premios</span>
+    </button>
+  </nav>
+
+  <!-- Contenedor Principal de Vistas -->
+  <main class="app-container">
+
+    <!-- VISTA 1: Selector de Tablas (1 al 12) -->
+    <section id="view-tables" class="view-section active">
+      <div class="peke-banner">
+        <div class="peke-mini-avatar">
+          <svg class="hamster-svg mini" viewBox="0 0 120 120">
+            <!-- Orejitas -->
+            <ellipse cx="35" cy="30" rx="14" ry="16" fill="#F4A261" />
+            <ellipse cx="35" cy="30" rx="8" ry="10" fill="#F4ACB7" />
+            <ellipse cx="85" cy="30" rx="14" ry="16" fill="#F4A261" />
+            <ellipse cx="85" cy="30" rx="8" ry="10" fill="#F4ACB7" />
+            <!-- Cuerpo / Cabeza -->
+            <ellipse cx="60" cy="65" rx="42" ry="38" fill="#F4A261" />
+            <ellipse cx="60" cy="74" rx="30" ry="24" fill="#FFE8D6" />
+            <!-- Ojos -->
+            <circle cx="46" cy="56" r="6" fill="#264653" />
+            <circle cx="48" cy="54" r="2.2" fill="#FFFFFF" />
+            <circle cx="74" cy="56" r="6" fill="#264653" />
+            <circle cx="76" cy="54" r="2.2" fill="#FFFFFF" />
+            <!-- Mejillas rosaditas -->
+            <circle cx="36" cy="66" r="6.5" fill="#FFB4A2" opacity="0.8" />
+            <circle cx="84" cy="66" r="6.5" fill="#FFB4A2" opacity="0.8" />
+            <!-- Nariz y hocico -->
+            <polygon points="60,63 56,59 64,59" fill="#E76F51" />
+            <path d="M 56 65 Q 60 70 64 65" stroke="#264653" stroke-width="2" fill="none" stroke-linecap="round" />
+            <!-- Manitas con semilla -->
+            <ellipse cx="50" cy="85" rx="7" ry="5" fill="#F4A261" />
+            <ellipse cx="70" cy="85" rx="7" ry="5" fill="#F4A261" />
+            <!-- Semillita de girasol -->
+            <path d="M 60 76 Q 66 84 60 90 Q 54 84 60 76 Z" fill="#2B2D42" />
+            <path d="M 60 78 L 60 88" stroke="#FFFFFF" stroke-width="1" opacity="0.5" />
+          </svg>
+        </div>
+        <div class="peke-speech">
+          <p id="pekeHomeMsg">¡Hola! Soy <strong>Peke</strong> 🐹. ¿Qué tabla practicamos hoy? ¡Gana semillitas para mi frasco!</p>
+        </div>
+      </div>
+
+      <div class="tables-grid" id="tablesGrid">
+        <!-- Las 12 tarjetas de tablas se generan por JS -->
+      </div>
+    </section>
+
+    <!-- VISTA 2: Zona de Juego y Ejercicios -->
+    <section id="view-play" class="view-section">
+      <div class="play-header">
+        <button id="btnBackToMenu" class="back-btn" title="Volver al menú">
+          <span>⬅</span> Volver
+        </button>
+        <div class="play-title-box">
+          <h2 id="playTitle">Tabla del 7</h2>
+          <div class="progress-bar-container">
+            <div id="playProgressBar" class="progress-bar-fill" style="width: 10%;"></div>
+          </div>
+          <span id="playQuestionCounter" class="counter-text">Pregunta 1 de 10</span>
+        </div>
+      </div>
+
+      <!-- Escenario de Peke con su frasco -->
+      <div class="game-stage">
+        <div class="peke-character-container">
+          <div class="peke-avatar-box" id="pekeAvatarBox">
+            <svg class="hamster-svg stage" id="pekeSvg" viewBox="0 0 120 120">
+              <!-- Orejitas -->
+              <ellipse class="ear-left" cx="35" cy="30" rx="14" ry="16" fill="#F4A261" />
+              <ellipse cx="35" cy="30" rx="8" ry="10" fill="#F4ACB7" />
+              <ellipse class="ear-right" cx="85" cy="30" rx="14" ry="16" fill="#F4A261" />
+              <ellipse cx="85" cy="30" rx="8" ry="10" fill="#F4ACB7" />
+              <!-- Cuerpo -->
+              <ellipse cx="60" cy="65" rx="42" ry="38" fill="#F4A261" />
+              <ellipse cx="60" cy="74" rx="30" ry="24" fill="#FFE8D6" />
+              <!-- Ojos -->
+              <circle cx="46" cy="56" r="6" fill="#264653" />
+              <circle cx="48" cy="54" r="2.2" fill="#FFFFFF" />
+              <circle cx="74" cy="56" r="6" fill="#264653" />
+              <circle cx="76" cy="54" r="2.2" fill="#FFFFFF" />
+              <!-- Mejillas -->
+              <circle cx="36" cy="66" r="6.5" fill="#FFB4A2" opacity="0.8" />
+              <circle cx="84" cy="66" r="6.5" fill="#FFB4A2" opacity="0.8" />
+              <!-- Hocico -->
+              <polygon points="60,63 56,59 64,59" fill="#E76F51" />
+              <path d="M 56 65 Q 60 70 64 65" stroke="#264653" stroke-width="2" fill="none" stroke-linecap="round" />
+              <!-- Manitas -->
+              <ellipse cx="50" cy="85" rx="7" ry="5" fill="#F4A261" />
+              <ellipse cx="70" cy="85" rx="7" ry="5" fill="#F4A261" />
+              <!-- Semilla en mano -->
+              <g id="pekeHeldSeed">
+                <path d="M 60 76 Q 66 84 60 90 Q 54 84 60 76 Z" fill="#2B2D42" />
+                <path d="M 60 78 L 60 88" stroke="#FFFFFF" stroke-width="1" opacity="0.5" />
+              </g>
+            </svg>
+          </div>
+          <div class="peke-dialogue-bubble" id="pekeDialogue">
+            ¡Tú puedes! ¿Cuánto es esto?
+          </div>
+        </div>
+
+        <!-- Tarjeta Central de Pregunta -->
+        <div class="question-card" id="questionCard">
+          <div class="question-expression">
+            <span id="numA" class="num-highlight">6</span>
+            <span class="math-op">×</span>
+            <span id="numB" class="num-highlight">7</span>
+            <span class="math-op">=</span>
+            <span id="answerDisplay" class="answer-box">?</span>
+          </div>
+
+          <div class="hint-action-bar">
+            <button id="btnToggleCopisi" class="btn-secondary hint-btn">
+              <span>🌻</span> ¿Ver con semillitas? (Pista)
+            </button>
+          </div>
+
+          <!-- Visualizador COPISI (Arreglo Rectangular de Semillitas) -->
+          <div id="copisiContainer" class="copisi-box hidden">
+            <div class="copisi-header">
+              <span id="copisiTitle">Representación: 6 filas de 7 semillitas</span>
+              <button id="btnCloseCopisi" class="close-hint-btn" title="Ocultar pista">✕</button>
+            </div>
+            <div id="copisiGrid" class="copisi-grid">
+              <!-- Semillitas renderizadas dinámicamente -->
+            </div>
+            <div id="copisiExplanation" class="copisi-note">
+              💡 <em>Contar por filas o columnas da exactamente el mismo resultado.</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teclado Numérico Táctil -->
+        <div class="keypad-container">
+          <div class="keypad-grid">
+            <button class="key-btn" data-key="1">1</button>
+            <button class="key-btn" data-key="2">2</button>
+            <button class="key-btn" data-key="3">3</button>
+            <button class="key-btn" data-key="4">4</button>
+            <button class="key-btn" data-key="5">5</button>
+            <button class="key-btn" data-key="6">6</button>
+            <button class="key-btn" data-key="7">7</button>
+            <button class="key-btn" data-key="8">8</button>
+            <button class="key-btn" data-key="9">9</button>
+            <button class="key-btn key-action key-clear" data-key="clear" title="Borrar">⌫</button>
+            <button class="key-btn" data-key="0">0</button>
+            <button class="key-btn key-action key-submit" id="btnSubmitAnswer" data-key="enter" title="Comprobar">✔</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 3: Desafío de Peke (Aleatorio Mixto) -->
+    <section id="view-desafio" class="view-section">
+      <div class="desafio-card">
+        <div class="desafio-hero">
+          <span class="hero-emoji">🎯</span>
+          <h2>El Gran Desafío de Peke</h2>
+          <p>¡Demuestra que eres una campeona de 4° básico! Responderás 12 multiplicaciones variadas de todas las tablas.</p>
+        </div>
+
+        <div class="desafio-options">
+          <div class="option-pill">✨ Sin límite de tiempo</div>
+          <div class="option-pill">🌻 Gana doble de semillitas</div>
+          <div class="option-pill">🏅 Desbloquea medallas especiales</div>
+        </div>
+
+        <button id="btnStartDesafio" class="btn-primary-large">
+          <span>🚀</span> ¡Comenzar Desafío!
+        </button>
+      </div>
+    </section>
+
+    <!-- VISTA 4: Tabla Pitagórica Interactiva (12x12) -->
+    <section id="view-pitagorica" class="view-section">
+      <div class="pitagorica-header">
+        <h2>📊 La Tabla Mágica de Peke (1 al 12)</h2>
+        <p>Toca cualquier casilla para ver cómo se cruzan las filas y columnas:</p>
+      </div>
+
+      <div class="pitagorica-detail" id="pitagoricaDetail">
+        <span class="detail-badge">Selecciona un número para ver el truco</span>
+      </div>
+
+      <div class="pitagorica-wrapper">
+        <div class="pitagorica-table" id="pitagoricaTable">
+          <!-- Se genera dinámicamente por JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 5: Premios y Medallas de Peke -->
+    <section id="view-premios" class="view-section">
+      <div class="premios-header">
+        <h2>🏆 Vitrina de Logros de Peke</h2>
+        <p>¡Colecciona todas las medallas practicando cada día!</p>
+      </div>
+
+      <div class="medals-grid" id="medalsGrid">
+        <!-- Generado dinámicamente -->
+      </div>
+
+      <div class="reset-data-box">
+        <button id="btnResetProgress" class="btn-text-danger" title="Reiniciar mi progreso">
+          🔄 Reiniciar avance (empezar de cero)
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE FELICITACIONES (Fin de Ronda) -->
+  <div id="modalWin" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="win-confetti-container" id="confettiContainer"></div>
+      <div class="win-avatar">
+        <svg class="hamster-svg win" viewBox="0 0 120 120">
+          <ellipse cx="35" cy="28" rx="14" ry="16" fill="#F4A261" />
+          <ellipse cx="35" cy="28" rx="8" ry="10" fill="#F4ACB7" />
+          <ellipse cx="85" cy="28" rx="14" ry="16" fill="#F4A261" />
+          <ellipse cx="85" cy="28" rx="8" ry="10" fill="#F4ACB7" />
+          <ellipse cx="60" cy="65" rx="42" ry="38" fill="#F4A261" />
+          <ellipse cx="60" cy="74" rx="30" ry="24" fill="#FFE8D6" />
+          <!-- Ojos felices cerraditos (arcos) -->
+          <path d="M 40 56 Q 46 48 52 56" stroke="#264653" stroke-width="4" fill="none" stroke-linecap="round" />
+          <path d="M 68 56 Q 74 48 80 56" stroke="#264653" stroke-width="4" fill="none" stroke-linecap="round" />
+          <circle cx="35" cy="65" r="7" fill="#FFB4A2" opacity="0.9" />
+          <circle cx="85" cy="65" r="7" fill="#FFB4A2" opacity="0.9" />
+          <polygon points="60,63 56,59 64,59" fill="#E76F51" />
+          <!-- Boca sonriente abierta -->
+          <path d="M 54 65 Q 60 76 66 65 Z" fill="#E76F51" />
+          <!-- Sombrerito de fiesta -->
+          <polygon points="60,10 50,34 70,34" fill="#E63946" />
+          <circle cx="60" cy="8" r="4" fill="#FFD166" />
+        </svg>
+      </div>
+
+      <h2 id="winModalTitle">¡Increíble trabajo! 🎉</h2>
+      <p id="winModalSubtitle">Peke está llena de semillitas y muy orgullosa de ti.</p>
+
+      <div class="win-rewards-box">
+        <div class="reward-item">
+          <span class="reward-icon">⭐</span>
+          <span id="winStarsEarned">+3 Estrellas</span>
+        </div>
+        <div class="reward-item">
+          <span class="reward-icon">🌻</span>
+          <span id="winSeedsEarned">+10 Semillitas</span>
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="btnPlayAgain" class="btn-primary">
+          <span>🔁</span> Practicar otra vez
+        </button>
+        <button id="btnWinBackMenu" class="btn-secondary">
+          <span>🏠</span> Ir al menú
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

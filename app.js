@@ -1,0 +1,744 @@
+/* ========================================================
+   TABLAS DE MULTIPLICAR CON PEKE LA HÁMSTER 🐹
+   Lógica JavaScript pura, ultrarrápida y 100% Offline
+   ======================================================== */
+
+// --- ESTADO GLOBAL Y PERSISTENCIA (localStorage) ---
+const STORAGE_KEY = 'peke_tablas_progreso_v1';
+
+const defaultState = {
+  seeds: 0,
+  stars: 0,
+  tables: {}, // { "1": { stars: 0, completed: false }, ... }
+  medals: [],
+  audio: true
+};
+
+let gameState = loadState();
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return { ...defaultState, ...JSON.parse(saved) };
+    }
+  } catch (e) {
+    console.warn('No se pudo acceder a localStorage', e);
+  }
+  return { ...defaultState };
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+  } catch (e) {
+    console.warn('Error al guardar en localStorage', e);
+  }
+  updateStatsDisplay();
+}
+
+// --- MOTOR DE AUDIO SINTETIZADO (Web Audio API) ---
+// 100% autónomo, 0 archivos mp3 externos
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playNote(freq, duration = 0.15, type = 'sine', gainVal = 0.25, startDelay = 0) {
+  if (!gameState.audio) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime + startDelay;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, now);
+
+  gain.gain.setValueAtTime(gainVal, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + duration);
+}
+
+function playSuccessSound() {
+  // Arpegio dulce ascendente: Do5, Mi5, Sol5, Do6
+  playNote(523.25, 0.12, 'triangle', 0.2, 0);
+  playNote(659.25, 0.12, 'triangle', 0.2, 0.08);
+  playNote(783.99, 0.15, 'triangle', 0.22, 0.16);
+  playNote(1046.50, 0.25, 'triangle', 0.25, 0.24);
+}
+
+function playTryAgainSound() {
+  // Toque suave, cálido y no punitivo: Sol4, Mi4
+  playNote(392.00, 0.18, 'sine', 0.18, 0);
+  playNote(329.63, 0.25, 'sine', 0.18, 0.12);
+}
+
+function playClickSound() {
+  playNote(800, 0.04, 'sine', 0.1, 0);
+}
+
+function playWinFanfare() {
+  // Fanfarria alegre de victoria
+  const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+  const times = [0, 0.12, 0.24, 0.36, 0.54, 0.72];
+  const durations = [0.1, 0.1, 0.1, 0.16, 0.16, 0.4];
+
+  notes.forEach((freq, idx) => {
+    playNote(freq, durations[idx], 'triangle', 0.25, times[idx]);
+  });
+}
+
+// --- MEDALLAS Y LOGROS ---
+const MEDALS_CONFIG = [
+  { id: 'first_seed', icon: '🌱', title: 'Primera Semilla', desc: 'Resuelve tu primer ejercicio' },
+  { id: 'seeds_10', icon: '🌻', title: 'Amiga de Peke', desc: 'Junta 10 semillitas de girasol' },
+  { id: 'seeds_50', icon: '🌾', title: 'Granjera Experta', desc: 'Junta 50 semillitas de girasol' },
+  { id: 'tabla_2_4', icon: '🐰', title: 'Doble del Doble', desc: 'Domina las tablas del 2 y del 4' },
+  { id: 'tabla_5_10', icon: '⭐', title: 'Patrones de Oro', desc: 'Domina las tablas del 5 y del 10' },
+  { id: 'tabla_7', icon: '🔥', title: 'Reina del 7', desc: 'Completa la difícil tabla del 7' },
+  { id: 'tabla_8', icon: '⚡', title: 'Poder del 8', desc: 'Completa la gran tabla del 8' },
+  { id: 'tabla_12', icon: '👑', title: 'Gran Maestra del 12', desc: 'Completa la tabla del 12' },
+  { id: 'desafio_win', icon: '🎯', title: 'Desafío Campeona', desc: 'Gana el Gran Desafío de Peke' },
+  { id: 'all_tables', icon: '🏆', title: 'Estrella de 4° Básico', desc: 'Completa todas las tablas (1 al 12)' }
+];
+
+function checkMedals(context = {}) {
+  let newlyUnlocked = false;
+
+  function award(id) {
+    if (!gameState.medals.includes(id)) {
+      gameState.medals.push(id);
+      newlyUnlocked = true;
+    }
+  }
+
+  if (gameState.seeds >= 1) award('first_seed');
+  if (gameState.seeds >= 10) award('seeds_10');
+  if (gameState.seeds >= 50) award('seeds_50');
+
+  const t = gameState.tables;
+  if (t['2']?.completed && t['4']?.completed) award('tabla_2_4');
+  if (t['5']?.completed && t['10']?.completed) award('tabla_5_10');
+  if (t['7']?.completed) award('tabla_7');
+  if (t['8']?.completed) award('tabla_8');
+  if (t['12']?.completed) award('tabla_12');
+  if (context.isDesafio && context.won) award('desafio_win');
+
+  const allCompleted = [1,2,3,4,5,6,7,8,9,10,11,12].every(num => t[num.toString()]?.completed);
+  if (allCompleted) award('all_tables');
+
+  if (newlyUnlocked) {
+    saveState();
+  }
+}
+
+// --- VARIABLES DEL JUEGO ACTIVO ---
+let currentGame = {
+  mode: 'table', // 'table' o 'desafio'
+  tableNum: 1,
+  questions: [],
+  currentIndex: 0,
+  currentAnswer: '',
+  errorsThisRound: 0,
+  firstTrySuccessCount: 0
+};
+
+// Frases cariñosas y chilenas de Peke
+const PEKE_CHEERS = [
+  "¡Seca! ¡Eres genial!",
+  "¡Muy bien! Peke está feliz 🐹",
+  "¡Excelente razonamiento!",
+  "¡Qué rápida! ¡Así se hace!",
+  "¡Una semillita más para el frasco!",
+  "¡Estupendo trabajo!"
+];
+
+const PEKE_TRY_AGAIN = [
+  "¡Casi casi! Probemos de nuevo 🌻",
+  "¡No te preocupes! Mira las semillitas 🐹",
+  "¡Tú puedes! Contemos juntos.",
+  "¡Buen intento! Miremos el dibujo."
+];
+
+// --- INICIALIZACIÓN AL CARGAR LA PÁGINA ---
+document.addEventListener('DOMContentLoaded', () => {
+  setupNavigation();
+  setupAudioToggle();
+  renderTablesGrid();
+  renderPitagoricaTable();
+  renderMedalsGrid();
+  setupKeypad();
+  setupCopisiButton();
+  updateStatsDisplay();
+
+  // Botón volver
+  document.getElementById('btnBackToMenu').addEventListener('click', () => {
+    switchView('view-tables');
+  });
+
+  // Botón iniciar Gran Desafío
+  document.getElementById('btnStartDesafio').addEventListener('click', () => {
+    startDesafio();
+  });
+
+  // Botones del Modal de Victoria
+  document.getElementById('btnPlayAgain').addEventListener('click', () => {
+    closeWinModal();
+    if (currentGame.mode === 'desafio') {
+      startDesafio();
+    } else {
+      startTableGame(currentGame.tableNum);
+    }
+  });
+
+  document.getElementById('btnWinBackMenu').addEventListener('click', () => {
+    closeWinModal();
+    switchView('view-tables');
+  });
+
+  // Botón reiniciar datos
+  document.getElementById('btnResetProgress').addEventListener('click', () => {
+    if (confirm('¿Segura que quieres reiniciar tu avance de semillitas y estrellas?')) {
+      gameState = { ...defaultState, tables: {}, medals: [] };
+      saveState();
+      renderTablesGrid();
+      renderMedalsGrid();
+      alert('¡Listo! Empezamos una nueva aventura.');
+    }
+  });
+
+  // Click en el logo lleva a inicio
+  document.getElementById('btnLogo').addEventListener('click', () => {
+    switchView('view-tables');
+  });
+
+  // Soporte para teclado físico (PC)
+  document.addEventListener('keydown', handlePhysicalKeyboard);
+});
+
+// --- GESTIÓN DE VISTAS (SPA ULTRA RÁPIDA) ---
+function setupNavigation() {
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetView = tab.getAttribute('data-view');
+      switchView(targetView);
+    });
+  });
+}
+
+function switchView(viewId) {
+  playClickSound();
+
+  // Actualizar botones de pestaña
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.toggle('active', t.getAttribute('data-view') === viewId);
+  });
+
+  // Cambiar sección visible
+  document.querySelectorAll('.view-section').forEach(sec => {
+    sec.classList.remove('active');
+  });
+
+  const targetSection = document.getElementById(viewId);
+  if (targetSection) {
+    targetSection.classList.add('active');
+  }
+
+  // Refrescar grillas al navegar
+  if (viewId === 'view-tables') renderTablesGrid();
+  if (viewId === 'view-premios') renderMedalsGrid();
+}
+
+// --- ACTUALIZAR CONTADORES SUPERIORES ---
+function updateStatsDisplay() {
+  document.getElementById('counterSeeds').textContent = gameState.seeds || 0;
+  document.getElementById('counterStars').textContent = gameState.stars || 0;
+}
+
+function setupAudioToggle() {
+  const btn = document.getElementById('btnAudioToggle');
+  const icon = document.getElementById('audioIcon');
+
+  function updateIcon() {
+    icon.textContent = gameState.audio ? '🔊' : '🔇';
+    btn.setAttribute('title', gameState.audio ? 'Sonido activado' : 'Sonido silenciado');
+  }
+
+  updateIcon();
+
+  btn.addEventListener('click', () => {
+    gameState.audio = !gameState.audio;
+    updateIcon();
+    saveState();
+    if (gameState.audio) {
+      playClickSound();
+    }
+  });
+}
+
+// --- RENDERIZAR SELECTOR DE TABLAS (1 al 12) ---
+function renderTablesGrid() {
+  const container = document.getElementById('tablesGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  for (let i = 1; i <= 12; i++) {
+    const tableData = gameState.tables[i.toString()] || { stars: 0, completed: false };
+    const card = document.createElement('div');
+    card.className = `table-card ${tableData.completed ? 'mastered' : ''}`;
+
+    let starsHtml = '';
+    for (let s = 1; s <= 3; s++) {
+      starsHtml += `<span class="${s <= tableData.stars ? 'star-active' : ''}">★</span>`;
+    }
+
+    card.innerHTML = `
+      <div class="table-card-badge">${tableData.completed ? '¡Dominada!' : 'Aprender'}</div>
+      <div class="table-card-num">${i}</div>
+      <div class="table-card-label">Tabla del ${i}</div>
+      <div class="table-stars">${starsHtml}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      startTableGame(i);
+    });
+
+    container.appendChild(card);
+  }
+}
+
+// --- INICIAR JUEGO DE UNA TABLA ESPECÍFICA ---
+function startTableGame(tableNum) {
+  currentGame.mode = 'table';
+  currentGame.tableNum = tableNum;
+  currentGame.currentIndex = 0;
+  currentGame.currentAnswer = '';
+  currentGame.errorsThisRound = 0;
+  currentGame.firstTrySuccessCount = 0;
+
+  // Generar 10 multiplicaciones sin repetición de la tabla elegida
+  // Priorizar factores del 1 al 10 y algunos 11 y 12
+  const factors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  shuffleArray(factors);
+  const selectedFactors = factors.slice(0, 10);
+
+  currentGame.questions = selectedFactors.map(factor => ({
+    a: tableNum,
+    b: factor,
+    result: tableNum * factor,
+    hadError: false
+  }));
+
+  document.getElementById('playTitle').textContent = `Tabla del ${tableNum}`;
+  switchView('view-play');
+  loadQuestion();
+}
+
+// --- INICIAR GRAN DESAFÍO (12 PREGUNTAS MIXTAS) ---
+function startDesafio() {
+  currentGame.mode = 'desafio';
+  currentGame.currentIndex = 0;
+  currentGame.currentAnswer = '';
+  currentGame.errorsThisRound = 0;
+  currentGame.firstTrySuccessCount = 0;
+
+  // Selección inteligente: mezclar tablas clave de 4° básico (6, 7, 8, 9, 11, 12) con tablas base
+  const pool = [];
+  const focusTables = [6, 7, 8, 9, 11, 12, 3, 4, 5];
+
+  while (pool.length < 12) {
+    const a = focusTables[Math.floor(Math.random() * focusTables.length)];
+    const b = Math.floor(Math.random() * 12) + 1;
+    // Evitar duplicados
+    if (!pool.some(q => q.a === a && q.b === b)) {
+      pool.push({ a, b, result: a * b, hadError: false });
+    }
+  }
+
+  currentGame.questions = pool;
+  document.getElementById('playTitle').textContent = `🎯 Gran Desafío de Peke`;
+  switchView('view-play');
+  loadQuestion();
+}
+
+// --- CARGAR PREGUNTA ACTUAL ---
+function loadQuestion() {
+  const q = currentGame.questions[currentGame.currentIndex];
+  if (!q) {
+    finishRound();
+    return;
+  }
+
+  currentGame.currentAnswer = '';
+  updateAnswerDisplay();
+
+  // Actualizar números en pantalla
+  document.getElementById('numA').textContent = q.a;
+  document.getElementById('numB').textContent = q.b;
+
+  // Barra de progreso
+  const total = currentGame.questions.length;
+  const current = currentGame.currentIndex + 1;
+  const percent = (current / total) * 100;
+  document.getElementById('playProgressBar').style.width = `${percent}%`;
+  document.getElementById('playQuestionCounter').textContent = `Pregunta ${current} de ${total}`;
+
+  // Ocultar pista COPISI al pasar a nueva pregunta
+  hideCopisi();
+
+  // Mensaje de Peke
+  const pekeMsg = document.getElementById('pekeDialogue');
+  pekeMsg.textContent = `¿Cuánto es ${q.a} × ${q.b}? ¡Tú puedes! 🐹`;
+
+  // Animación suave de Peke
+  const avatarBox = document.getElementById('pekeAvatarBox');
+  avatarBox.classList.remove('bounce');
+}
+
+// --- ACTUALIZAR VISUALIZACIÓN DE RESPUESTA ---
+function updateAnswerDisplay() {
+  const display = document.getElementById('answerDisplay');
+  if (currentGame.currentAnswer === '') {
+    display.textContent = '?';
+    display.classList.remove('active-filled');
+  } else {
+    display.textContent = currentGame.currentAnswer;
+    display.classList.add('active-filled');
+  }
+}
+
+// --- GESTIÓN DEL TECLADO NUMÉRICO TÁCTIL ---
+function setupKeypad() {
+  const keys = document.querySelectorAll('.key-btn');
+  keys.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const keyVal = btn.getAttribute('data-key');
+      handleKeyInput(keyVal);
+    });
+  });
+}
+
+function handleKeyInput(key) {
+  playClickSound();
+
+  if (key === 'clear') {
+    currentGame.currentAnswer = currentGame.currentAnswer.slice(0, -1);
+    updateAnswerDisplay();
+  } else if (key === 'enter') {
+    submitAnswer();
+  } else if (/^[0-9]$/.test(key)) {
+    // Máximo 3 dígitos (las multiplicaciones hasta 12x12 llegan a 144)
+    if (currentGame.currentAnswer.length < 3) {
+      currentGame.currentAnswer += key;
+      updateAnswerDisplay();
+    }
+  }
+}
+
+function handlePhysicalKeyboard(e) {
+  // Solo procesar si estamos en la vista de juego
+  const playView = document.getElementById('view-play');
+  if (!playView || !playView.classList.contains('active')) return;
+
+  if (e.key >= '0' && e.key <= '9') {
+    handleKeyInput(e.key);
+  } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    handleKeyInput('clear');
+  } else if (e.key === 'Enter') {
+    handleKeyInput('enter');
+  }
+}
+
+// --- COMPROBAR RESPUESTA ---
+function submitAnswer() {
+  if (currentGame.currentAnswer === '') return;
+
+  const q = currentGame.questions[currentGame.currentIndex];
+  const userNum = parseInt(currentGame.currentAnswer, 10);
+  const avatarBox = document.getElementById('pekeAvatarBox');
+  const dialogue = document.getElementById('pekeDialogue');
+
+  if (userNum === q.result) {
+    // ¡RESPUESTA CORRECTA! 🎉
+    playSuccessSound();
+
+    // Recompensa inmediata
+    gameState.seeds += 1;
+    saveState();
+
+    if (!q.hadError) {
+      currentGame.firstTrySuccessCount++;
+    }
+
+    // Peke celebra
+    avatarBox.classList.add('bounce');
+    const randomCheer = PEKE_CHEERS[Math.floor(Math.random() * PEKE_CHEERS.length)];
+    dialogue.textContent = randomCheer;
+
+    checkMedals();
+
+    // Pasar a la siguiente pregunta tras breve pausa
+    setTimeout(() => {
+      currentGame.currentIndex++;
+      loadQuestion();
+    }, 700);
+
+  } else {
+    // RESPUESTA INCORRECTA (AMABLE Y SIN FRUSTRACIÓN) ❤️
+    playTryAgainSound();
+    q.hadError = true;
+    currentGame.errorsThisRound++;
+
+    const randomEncourage = PEKE_TRY_AGAIN[Math.floor(Math.random() * PEKE_TRY_AGAIN.length)];
+    dialogue.textContent = randomEncourage;
+
+    // Mostrar automáticamente la pista COPISI para que entienda el área
+    showCopisi(q.a, q.b);
+
+    // Limpiar respuesta para que lo intente de nuevo
+    currentGame.currentAnswer = '';
+    updateAnswerDisplay();
+  }
+}
+
+// --- VISUALIZADOR COPISI (SEMILLITAS DE GIRASOL) ---
+function setupCopisiButton() {
+  const btnToggle = document.getElementById('btnToggleCopisi');
+  const btnClose = document.getElementById('btnCloseCopisi');
+
+  btnToggle.addEventListener('click', () => {
+    const q = currentGame.questions[currentGame.currentIndex];
+    if (q) {
+      playClickSound();
+      showCopisi(q.a, q.b);
+    }
+  });
+
+  btnClose.addEventListener('click', () => {
+    playClickSound();
+    hideCopisi();
+  });
+}
+
+function showCopisi(rows, cols) {
+  const container = document.getElementById('copisiContainer');
+  const title = document.getElementById('copisiTitle');
+  const grid = document.getElementById('copisiGrid');
+
+  title.textContent = `Pista: ${rows} filas de ${cols} semillitas (${rows} × ${cols} = ${rows * cols})`;
+  grid.innerHTML = '';
+
+  // Construir la matriz de semillitas
+  for (let r = 0; r < rows; r++) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'copisi-row';
+
+    for (let c = 0; c < cols; c++) {
+      const seedEl = document.createElement('div');
+      seedEl.className = 'copisi-seed';
+      seedEl.setAttribute('title', `Fila ${r+1}, Columna ${c+1}`);
+      rowEl.appendChild(seedEl);
+    }
+
+    grid.appendChild(rowEl);
+  }
+
+  container.classList.remove('hidden');
+}
+
+function hideCopisi() {
+  const container = document.getElementById('copisiContainer');
+  container.classList.add('hidden');
+}
+
+// --- FINALIZAR RONDA Y MODAL DE VICTORIA ---
+function finishRound() {
+  playWinFanfare();
+
+  // Calcular estrellas ganadas (máximo 3)
+  let earnedStars = 1;
+  const ratio = currentGame.firstTrySuccessCount / currentGame.questions.length;
+  if (ratio >= 0.9) {
+    earnedStars = 3;
+  } else if (ratio >= 0.7) {
+    earnedStars = 2;
+  }
+
+  gameState.stars += earnedStars;
+
+  // Registrar tabla dominada si es modo tabla
+  if (currentGame.mode === 'table') {
+    const tId = currentGame.tableNum.toString();
+    const prev = gameState.tables[tId] || { stars: 0, completed: false };
+    gameState.tables[tId] = {
+      stars: Math.max(prev.stars, earnedStars),
+      completed: true
+    };
+  }
+
+  saveState();
+  checkMedals({ isDesafio: currentGame.mode === 'desafio', won: true });
+
+  // Preparar modal
+  const modal = document.getElementById('modalWin');
+  const title = document.getElementById('winModalTitle');
+  const sub = document.getElementById('winModalSubtitle');
+
+  if (currentGame.mode === 'desafio') {
+    title.textContent = '¡Desafío Conquistado! 🎯';
+    sub.textContent = '¡Eres toda una campeona de 4° básico!';
+  } else {
+    title.textContent = `¡Tabla del ${currentGame.tableNum} Completada! 🎉`;
+    sub.textContent = 'Peke comió muchas semillitas y está súper feliz.';
+  }
+
+  document.getElementById('winStarsEarned').textContent = `+${earnedStars} Estrellas`;
+  document.getElementById('winSeedsEarned').textContent = `+${currentGame.questions.length} Semillitas`;
+
+  triggerConfetti();
+  modal.classList.remove('hidden');
+}
+
+function closeWinModal() {
+  document.getElementById('modalWin').classList.add('hidden');
+}
+
+// Confeti ligero en CSS
+function triggerConfetti() {
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  const colors = ['#FF9F1C', '#2EC4B6', '#FF5D73', '#FFD166', '#8338EC'];
+
+  for (let i = 0; i < 30; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = `${Math.random() * 1.5}s`;
+    piece.style.animationDuration = `${1.8 + Math.random() * 1.2}s`;
+    container.appendChild(piece);
+  }
+}
+
+// --- TABLA PITAGÓRICA INTERACTIVA (12x12) ---
+function renderPitagoricaTable() {
+  const container = document.getElementById('pitagoricaTable');
+  const detail = document.getElementById('pitagoricaDetail');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Casilla de esquina (0,0)
+  const corner = document.createElement('div');
+  corner.className = 'p-cell p-corner';
+  corner.textContent = '×';
+  container.appendChild(corner);
+
+  // Encabezados de columnas (1 a 12)
+  for (let c = 1; c <= 12; c++) {
+    const colHeader = document.createElement('div');
+    colHeader.className = 'p-cell p-header';
+    colHeader.textContent = c;
+    container.appendChild(colHeader);
+  }
+
+  // Filas (1 a 12)
+  for (let r = 1; r <= 12; r++) {
+    // Encabezado de fila
+    const rowHeader = document.createElement('div');
+    rowHeader.className = 'p-cell p-header';
+    rowHeader.textContent = r;
+    container.appendChild(rowHeader);
+
+    // Celdas de producto
+    for (let c = 1; c <= 12; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'p-cell';
+      if (r === c) cell.classList.add('p-diagonal'); // Cuadrados perfectos
+      cell.textContent = r * c;
+
+      cell.addEventListener('click', () => {
+        playClickSound();
+        highlightPitagorica(r, c);
+        detail.innerHTML = `
+          <span class="detail-badge">
+            🐹 <strong>${r} × ${c} = ${r * c}</strong> &nbsp; (o también ${c} × ${r} = ${r * c})
+          </span>
+        `;
+      });
+
+      container.appendChild(cell);
+    }
+  }
+}
+
+function highlightPitagorica(targetR, targetC) {
+  const cells = document.querySelectorAll('.pitagorica-table .p-cell');
+  // 13 columnas (0 a 12)
+  cells.forEach((cell, index) => {
+    const row = Math.floor(index / 13);
+    const col = index % 13;
+
+    if (row === targetR || col === targetC) {
+      cell.classList.add('p-highlight');
+    } else {
+      cell.classList.remove('p-highlight');
+    }
+  });
+}
+
+// --- RENDERIZAR VITRINA DE MEDALLAS ---
+function renderMedalsGrid() {
+  const container = document.getElementById('medalsGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  MEDALS_CONFIG.forEach(med => {
+    const isUnlocked = gameState.medals.includes(med.id);
+    const card = document.createElement('div');
+    card.className = `medal-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+    card.innerHTML = `
+      <div class="medal-icon">${isUnlocked ? med.icon : '🔒'}</div>
+      <div class="medal-title">${med.title}</div>
+      <div class="medal-desc">${med.desc}</div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+// --- UTILIDAD: MEZCLAR ARRAY ---
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// --- REGISTRO DE SERVICE WORKER PARA OFFLINE TOTAL ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('Peke PWA: Service Worker activo y listo para trabajar offline'))
+      .catch(err => console.log('Peke PWA Service Worker info:', err));
+  });
+}

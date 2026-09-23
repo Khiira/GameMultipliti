@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF0DC"/>
+      <stop offset="100%" stop-color="#FFD199"/>
+    </radialGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bgGrad)" />
+  <g transform="translate(16, 16) scale(1.33)">
+    <!-- Orejitas -->
+    <ellipse cx="35" cy="30" rx="14" ry="16" fill="#F4A261" />
+    <ellipse cx="35" cy="30" rx="8" ry="10" fill="#F4ACB7" />
+    <ellipse cx="85" cy="30" rx="14" ry="16" fill="#F4A261" />
+    <ellipse cx="85" cy="30" rx="8" ry="10" fill="#F4ACB7" />
+    <!-- Cuerpo / Cabeza -->
+    <ellipse cx="60" cy="65" rx="42" ry="38" fill="#F4A261" />
+    <ellipse cx="60" cy="74" rx="30" ry="24" fill="#FFE8D6" />
+    <!-- Ojos -->
+    <circle cx="46" cy="56" r="6" fill="#264653" />
+    <circle cx="48" cy="54" r="2.2" fill="#FFFFFF" />
+    <circle cx="74" cy="56" r="6" fill="#264653" />
+    <circle cx="76" cy="54" r="2.2" fill="#FFFFFF" />
+    <!-- Mejillas rosaditas -->
+    <circle cx="36" cy="66" r="6.5" fill="#FFB4A2" opacity="0.8" />
+    <circle cx="84" cy="66" r="6.5" fill="#FFB4A2" opacity="0.8" />
+    <!-- Nariz y hocico -->
+    <polygon points="60,63 56,59 64,59" fill="#E76F51" />
+    <path d="M 56 65 Q 60 70 64 65" stroke="#264653" stroke-width="2" fill="none" stroke-linecap="round" />
+    <!-- Manitas con semilla -->
+    <ellipse cx="50" cy="85" rx="7" ry="5" fill="#F4A261" />
+    <ellipse cx="70" cy="85" rx="7" ry="5" fill="#F4A261" />
+    <!-- Semillita de girasol -->
+    <path d="M 60 76 Q 66 84 60 90 Q 54 84 60 76 Z" fill="#2B2D42" />
+    <path d="M 60 78 L 60 88" stroke="#FFFFFF" stroke-width="1" opacity="0.5" />
+  </g>
+</svg>
