@@ -111,9 +111,14 @@
         </div>
         <div class="peke-speech">
           <p id="pekeHomeMsg">¡Hola! Soy <strong>Peke</strong> 🐹. ¿Qué tabla practicamos hoy? ¡Gana semillitas para mi frasco!</p>
-          <button id="btnBannerInstall" class="banner-install-btn hidden">
-            <span>📲</span> Instalar en el Celular (¡Juega sin internet!)
-          </button>
+          <div id="pwaBannerContainer" class="banner-install-container hidden">
+            <button id="btnBannerInstall" class="banner-install-btn">
+              <span>📲</span> Instalar en el Celular (¡Juega sin internet!)
+            </button>
+            <button id="btnDismissInstallBanner" class="btn-dismiss-install" title="Ocultar este aviso porque ya la instalé">
+              ✕ Ya la tengo instalada
+            </button>
+          </div>
         </div>
       </div>
 
@@ -386,6 +391,25 @@
           </button>
           <button id="btnImportProgress" class="btn-secondary" style="font-weight: 800; flex: 1; min-width: 140px;">
             <span>📥</span> Cargar Avance
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjeta 5: Aviso de Instalación PWA en Celular -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <span>📲</span>
+          <h3>Aviso de Instalación PWA</h3>
+        </div>
+        <p class="config-desc">
+          Indica si el celular ya tiene instalada la aplicación para no mostrar avisos repetidos a Isabella:
+        </p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <span id="pwaStatusText" style="font-weight: 800; font-size: 0.95rem; color: #065F46;">
+            📱 Verificando estado...
+          </span>
+          <button id="btnTogglePwaInstallPrompt" class="btn-secondary" style="font-weight: 800; font-size: 0.85rem; padding: 6px 12px;">
+            🔄 Volver a mostrar aviso
           </button>
         </div>
       </div>

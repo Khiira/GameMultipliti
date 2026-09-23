@@ -387,6 +387,7 @@ function switchView(viewId) {
     renderMedalsGrid();
   }
   if (viewId === 'view-config') {
+    if (typeof updatePwaConfigStatus === 'function') updatePwaConfigStatus();
     renderTablesToggleGrid();
     renderCustomRewardsList();
   }
@@ -1371,23 +1372,101 @@ function importProgress() {
   }
 }
 
-// --- MANEJO DE INSTALACIÓN PWA (ANDROID & IOS) ---
+// --- MANEJO INTELIGENTE DE INSTALACIÓN PWA (ANDROID & IOS) ---
 let deferredInstallPrompt = null;
+
+function isPwaInstalled() {
+  return localStorage.getItem('peke_pwa_installed') === 'true';
+}
+
+function updatePwaConfigStatus() {
+  const pwaStatusText = document.getElementById('pwaStatusText');
+  const btnToggle = document.getElementById('btnTogglePwaInstallPrompt');
+  if (!pwaStatusText || !btnToggle) return;
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                       window.navigator.standalone === true || 
+                       (document.referrer && document.referrer.includes('android-app://'));
+
+  if (isStandalone) {
+    pwaStatusText.innerHTML = `📲 <strong>App en Pantalla Completa</strong> (Abierta desde el ícono instalado)`;
+    pwaStatusText.style.color = '#065F46';
+    btnToggle.innerHTML = `✅ Ya está instalada`;
+    btnToggle.disabled = true;
+    btnToggle.style.opacity = '0.7';
+  } else if (isPwaInstalled()) {
+    pwaStatusText.innerHTML = `✅ <strong>Avisos de instalación ocultos</strong> (Marcada como ya instalada)`;
+    pwaStatusText.style.color = '#065F46';
+    btnToggle.innerHTML = `🔄 Volver a mostrar aviso`;
+    btnToggle.disabled = false;
+    btnToggle.style.opacity = '1';
+  } else {
+    pwaStatusText.innerHTML = `ℹ️ <strong>Avisos activos</strong> (Visible en pantalla principal)`;
+    pwaStatusText.style.color = '#B45309';
+    btnToggle.innerHTML = `✕ Ocultar aviso (Ya instalada)`;
+    btnToggle.disabled = false;
+    btnToggle.style.opacity = '1';
+  }
+}
 
 function setupPWAInstall() {
   const btnHeader = document.getElementById('btnInstallApp');
+  const bannerContainer = document.getElementById('pwaBannerContainer');
   const btnBanner = document.getElementById('btnBannerInstall');
+  const btnDismiss = document.getElementById('btnDismissInstallBanner');
+  const btnToggleConfig = document.getElementById('btnTogglePwaInstallPrompt');
   const modalGuide = document.getElementById('modalInstallGuide');
   const btnCloseGuide = document.getElementById('btnCloseInstallGuide');
   const stepsContent = document.getElementById('installStepsContent');
 
-  // Si ya está abierta como app instalada (standalone), ocultar botones
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                       window.navigator.standalone === true || 
+                       (document.referrer && document.referrer.includes('android-app://'));
+
+  // Si se abre en modo standalone (desde el ícono del teléfono), marcar como instalada
   if (isStandalone) {
-    if (btnHeader) btnHeader.classList.add('hidden');
-    if (btnBanner) btnBanner.classList.add('hidden');
-    return;
+    localStorage.setItem('peke_pwa_installed', 'true');
   }
+
+  function hideInstallPrompts() {
+    if (btnHeader) btnHeader.classList.add('hidden');
+    if (bannerContainer) bannerContainer.classList.add('hidden');
+  }
+
+  function showInstallPrompts() {
+    if (isStandalone || isPwaInstalled()) {
+      hideInstallPrompts();
+      return;
+    }
+    if (btnHeader) btnHeader.classList.remove('hidden');
+    if (bannerContainer) bannerContainer.classList.remove('hidden');
+  }
+
+  // Si ya está instalada o en standalone, ocultar inmediatamente
+  if (isStandalone || isPwaInstalled()) {
+    hideInstallPrompts();
+  }
+
+  // Detectar si el sistema operativo ya tiene el WebAPK instalado (Chromium Android)
+  if ('getInstalledRelatedApps' in navigator) {
+    navigator.getInstalledRelatedApps().then(relatedApps => {
+      if (Array.isArray(relatedApps) && relatedApps.length > 0) {
+        console.log('Peke PWA: Aplicación ya instalada detectada en el dispositivo');
+        localStorage.setItem('peke_pwa_installed', 'true');
+        hideInstallPrompts();
+        updatePwaConfigStatus();
+      }
+    }).catch(() => {});
+  }
+
+  // Escuchar cuando la app se instala con éxito (desde prompt o menú del navegador)
+  window.addEventListener('appinstalled', () => {
+    console.log('Peke PWA: Evento appinstalled recibido con éxito');
+    localStorage.setItem('peke_pwa_installed', 'true');
+    hideInstallPrompts();
+    updatePwaConfigStatus();
+    deferredInstallPrompt = null;
+  });
 
   // Detectar si es iOS (iPhone o iPad)
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -1396,14 +1475,45 @@ function setupPWAInstall() {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    if (btnHeader) btnHeader.classList.remove('hidden');
-    if (btnBanner) btnBanner.classList.remove('hidden');
+    if (!isPwaInstalled() && !isStandalone) {
+      showInstallPrompts();
+    }
   });
 
-  // En iOS o navegadores móviles, mostrar el botón siempre para facilitar la instalación
+  // En iOS o navegadores móviles, mostrar el botón solo si NO ha sido instalada ni descartada
   if (isIOS || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    if (btnHeader) btnHeader.classList.remove('hidden');
-    if (btnBanner) btnBanner.classList.remove('hidden');
+    if (!isPwaInstalled() && !isStandalone) {
+      showInstallPrompts();
+    }
+  }
+
+  // Botón "✕ Ya la tengo instalada" en el banner
+  if (btnDismiss) {
+    btnDismiss.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playClickSound();
+      localStorage.setItem('peke_pwa_installed', 'true');
+      hideInstallPrompts();
+      updatePwaConfigStatus();
+    });
+  }
+
+  // Botón para alternar visibilidad en Ajustes de Papá
+  if (btnToggleConfig) {
+    btnToggleConfig.addEventListener('click', () => {
+      playClickSound();
+      if (isPwaInstalled()) {
+        localStorage.removeItem('peke_pwa_installed');
+        showInstallPrompts();
+        updatePwaConfigStatus();
+        alert('ℹ️ Aviso de instalación reactivado en la pantalla principal.');
+      } else {
+        localStorage.setItem('peke_pwa_installed', 'true');
+        hideInstallPrompts();
+        updatePwaConfigStatus();
+        alert('✅ Aviso de instalación ocultado correctamente.');
+      }
+    });
   }
 
   function handleInstallClick() {
@@ -1413,9 +1523,10 @@ function setupPWAInstall() {
       deferredInstallPrompt.prompt();
       deferredInstallPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
-          console.log('Peke PWA instalada con éxito');
-          if (btnHeader) btnHeader.classList.add('hidden');
-          if (btnBanner) btnBanner.classList.add('hidden');
+          console.log('Peke PWA: Instalación aceptada por el usuario');
+          localStorage.setItem('peke_pwa_installed', 'true');
+          hideInstallPrompts();
+          updatePwaConfigStatus();
         }
         deferredInstallPrompt = null;
       });
@@ -1458,6 +1569,8 @@ function setupPWAInstall() {
     }
     modalGuide.classList.remove('hidden');
   }
+
+  updatePwaConfigStatus();
 }
 
 // --- REGISTRO DE SERVICE WORKER PARA OFFLINE TOTAL ---

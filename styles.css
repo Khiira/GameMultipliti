@@ -1403,8 +1403,20 @@ body {
   transform: scale(1.05);
 }
 
-.banner-install-btn {
+.banner-install-container {
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.banner-install-container.hidden {
+  display: none !important;
+}
+
+.banner-install-btn {
+  margin-top: 0;
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: #FFFFFF;
   border: none;
@@ -1424,6 +1436,28 @@ body {
 .banner-install-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
+}
+
+.btn-dismiss-install {
+  background: #FFFBEB;
+  border: 1.5px dashed #D97706;
+  color: #92400E;
+  padding: 7px 12px;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-dismiss-install:hover {
+  background: #FEF3C7;
+  color: #78350F;
+  border-color: #B45309;
+  transform: translateY(-1px);
 }
 
 .install-card {
