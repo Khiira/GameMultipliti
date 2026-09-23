@@ -24,6 +24,11 @@ const defaultState = {
 
 let gameState = loadState();
 
+// Solicitar al celular que proteja el almacenamiento para que nunca borre el avance
+if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(() => {});
+}
+
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);

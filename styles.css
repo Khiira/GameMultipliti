@@ -2158,3 +2158,41 @@ body {
     font-size: 1.3rem;
   }
 }
+
+/* ========================================================
+   PIE DE PÁGINA CON CRÉDITOS DE KHIIRA
+   ======================================================== */
+.app-footer {
+  text-align: center;
+  padding: 22px 16px 36px;
+  margin-top: auto;
+  border-top: 2px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-footer p {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #78350F;
+}
+
+.app-footer strong {
+  color: #EA580C;
+  font-weight: 900;
+}
+
+.offline-badge-pill {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #065F46;
+  background: #D1FAE5;
+  border: 1px solid #6EE7B7;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
