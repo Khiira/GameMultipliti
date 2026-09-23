@@ -309,9 +309,10 @@ function setupNavigation() {
   tabs.forEach(tab => {
     tab.addEventListener('click', (e) => {
       const targetView = tab.getAttribute('data-view');
-      // Proteger Ajustes con el Desafío de Papá
-      if (targetView === 'view-config' && !isParentUnlocked) {
+      // Bloqueo estricto: CADA intento de ingreso a Ajustes exige el Desafío de Papá
+      if (targetView === 'view-config') {
         e.preventDefault();
+        isParentUnlocked = false; // Siempre restablecer para exigir resolver el desafío
         openParentChallengeModal();
         return;
       }
@@ -322,6 +323,17 @@ function setupNavigation() {
 
 function switchView(viewId) {
   playClickSound();
+
+  // Si se intenta navegar a view-config directamente sin estar desbloqueado
+  if (viewId === 'view-config' && !isParentUnlocked) {
+    openParentChallengeModal();
+    return;
+  }
+
+  // AL SALIR de view-config hacia cualquier otra pestaña, se bloquea de inmediato
+  if (viewId !== 'view-config') {
+    isParentUnlocked = false;
+  }
 
   // Actualizar botones de pestaña
   document.querySelectorAll('.nav-tab').forEach(t => {
@@ -1176,6 +1188,7 @@ function openParentChallengeModal() {
 }
 
 function closeParentChallengeModal() {
+  isParentUnlocked = false;
   document.getElementById('modalParentChallenge').classList.add('hidden');
 }
 
