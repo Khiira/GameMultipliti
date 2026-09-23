@@ -7,9 +7,16 @@
 const STORAGE_KEY = 'peke_tablas_progreso_v1';
 
 const defaultState = {
+  studentName: 'Isabella',
   seeds: 0,
   stars: 0,
   tables: {}, // { "1": { stars: 0, completed: false }, ... }
+  activeTables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+  customRewards: [
+    { id: 1, title: 'Ir por un rico helado con papá', icon: '🍦', costStars: 30, redeemed: false },
+    { id: 2, title: 'Elegir la película de la noche', icon: '🎬', costStars: 50, redeemed: false },
+    { id: 3, title: 'Tarde de paseo o juegos favoritos', icon: '🎡', costStars: 80, redeemed: false }
+  ],
   medals: [],
   audio: true
 };
@@ -20,7 +27,14 @@ function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return { ...defaultState, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaultState,
+        ...parsed,
+        studentName: parsed.studentName || defaultState.studentName,
+        activeTables: Array.isArray(parsed.activeTables) && parsed.activeTables.length > 0 ? parsed.activeTables : defaultState.activeTables,
+        customRewards: Array.isArray(parsed.customRewards) && parsed.customRewards.length > 0 ? parsed.customRewards : defaultState.customRewards
+      };
     }
   } catch (e) {
     console.warn('No se pudo acceder a localStorage', e);
@@ -35,6 +49,15 @@ function saveState() {
     console.warn('Error al guardar en localStorage', e);
   }
   updateStatsDisplay();
+  updateHomeWelcome();
+}
+
+function updateHomeWelcome() {
+  const name = gameState.studentName || 'Isabella';
+  const homeMsg = document.getElementById('pekeHomeMsg');
+  if (homeMsg) {
+    homeMsg.innerHTML = `¡Hola, <strong>${name}</strong>! Soy <strong>Peke</strong> 🐹. ¿Qué tabla practicamos hoy? ¡Gana semillitas para mi frasco!`;
+  }
 }
 
 // --- MOTOR DE AUDIO SINTETIZADO (Web Audio API) ---
@@ -160,15 +183,18 @@ let currentGame = {
   firstTrySuccessCount: 0
 };
 
-// Frases cariñosas y chilenas de Peke
-const PEKE_CHEERS = [
-  "¡Seca! ¡Eres genial!",
-  "¡Muy bien! Peke está feliz 🐹",
-  "¡Excelente razonamiento!",
-  "¡Qué rápida! ¡Así se hace!",
-  "¡Una semillita más para el frasco!",
-  "¡Estupendo trabajo!"
-];
+function getPekeCheer() {
+  const name = gameState.studentName || 'Isabella';
+  const cheers = [
+    `¡Seca, ${name}! ¡Eres genial!`,
+    `¡Muy bien, ${name}! Peke está feliz 🐹`,
+    `¡Excelente razonamiento, ${name}!`,
+    `¡Qué rápida! ¡Así se hace, ${name}!`,
+    `¡Una semillita más para el frasco!`,
+    `¡Estupendo trabajo, ${name}!`
+  ];
+  return cheers[Math.floor(Math.random() * cheers.length)];
+}
 
 const PEKE_TRY_AGAIN = [
   "¡Casi casi! Probemos de nuevo 🌻",
@@ -181,9 +207,13 @@ const PEKE_TRY_AGAIN = [
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupAudioToggle();
+  updateHomeWelcome();
   renderTablesGrid();
   renderPitagoricaTable();
   renderMedalsGrid();
+  setupConfigView();
+  renderTablesToggleGrid();
+  renderCustomRewardsList();
   setupKeypad();
   setupCopisiButton();
   updateStatsDisplay();
@@ -213,6 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
     switchView('view-tables');
   });
 
+  // Botón del Modal de Ticket Canjeado
+  document.getElementById('btnCloseTicket').addEventListener('click', () => {
+    closeTicketModal();
+  });
+
   // Botón reiniciar datos
   document.getElementById('btnResetProgress').addEventListener('click', () => {
     if (confirm('¿Segura que quieres reiniciar tu avance de semillitas y estrellas?')) {
@@ -220,6 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
       saveState();
       renderTablesGrid();
       renderMedalsGrid();
+      renderTablesToggleGrid();
+      renderCustomRewardsList();
       alert('¡Listo! Empezamos una nueva aventura.');
     }
   });
@@ -265,6 +302,10 @@ function switchView(viewId) {
   // Refrescar grillas al navegar
   if (viewId === 'view-tables') renderTablesGrid();
   if (viewId === 'view-premios') renderMedalsGrid();
+  if (viewId === 'view-config') {
+    renderTablesToggleGrid();
+    renderCustomRewardsList();
+  }
 }
 
 // --- ACTUALIZAR CONTADORES SUPERIORES ---
@@ -352,7 +393,7 @@ function startTableGame(tableNum) {
   loadQuestion();
 }
 
-// --- INICIAR GRAN DESAFÍO (12 PREGUNTAS MIXTAS) ---
+// --- INICIAR GRAN DESAFÍO (GARANTIZADO PARA TODAS LAS TABLAS ACTIVAS) ---
 function startDesafio() {
   currentGame.mode = 'desafio';
   currentGame.currentIndex = 0;
@@ -360,21 +401,27 @@ function startDesafio() {
   currentGame.errorsThisRound = 0;
   currentGame.firstTrySuccessCount = 0;
 
-  // Selección inteligente: mezclar tablas clave de 4° básico (6, 7, 8, 9, 11, 12) con tablas base
-  const pool = [];
-  const focusTables = [6, 7, 8, 9, 11, 12, 3, 4, 5];
+  // GARANTÍA: Al menos 1 pregunta por cada tabla activa seleccionada
+  const active = (gameState.activeTables && gameState.activeTables.length > 0)
+    ? [...gameState.activeTables]
+    : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-  while (pool.length < 12) {
-    const a = focusTables[Math.floor(Math.random() * focusTables.length)];
-    const b = Math.floor(Math.random() * 12) + 1;
-    // Evitar duplicados
-    if (!pool.some(q => q.a === a && q.b === b)) {
-      pool.push({ a, b, result: a * b, hadError: false });
-    }
-  }
+  const pool = active.map(tableNum => {
+    // Escoger un factor aleatorio del 1 al 12
+    const factor = Math.floor(Math.random() * 12) + 1;
+    return {
+      a: tableNum,
+      b: factor,
+      result: tableNum * factor,
+      hadError: false
+    };
+  });
+
+  // Mezclar para que el orden sea sorpresa y dinámico
+  shuffleArray(pool);
 
   currentGame.questions = pool;
-  document.getElementById('playTitle').textContent = `🎯 Gran Desafío de Peke`;
+  document.getElementById('playTitle').textContent = `🎯 Gran Desafío (${pool.length} Tablas)`;
   switchView('view-play');
   loadQuestion();
 }
@@ -490,7 +537,7 @@ function submitAnswer() {
 
     // Peke celebra
     avatarBox.classList.add('bounce');
-    const randomCheer = PEKE_CHEERS[Math.floor(Math.random() * PEKE_CHEERS.length)];
+    const randomCheer = getPekeCheer();
     dialogue.textContent = randomCheer;
 
     checkMedals();
@@ -602,12 +649,13 @@ function finishRound() {
   const title = document.getElementById('winModalTitle');
   const sub = document.getElementById('winModalSubtitle');
 
+  const studentName = gameState.studentName || 'Isabella';
   if (currentGame.mode === 'desafio') {
     title.textContent = '¡Desafío Conquistado! 🎯';
-    sub.textContent = '¡Eres toda una campeona de 4° básico!';
+    sub.textContent = `¡Eres toda una campeona de 4° básico, ${studentName}!`;
   } else {
     title.textContent = `¡Tabla del ${currentGame.tableNum} Completada! 🎉`;
-    sub.textContent = 'Peke comió muchas semillitas y está súper feliz.';
+    sub.textContent = `Peke comió muchas semillitas y está súper feliz contigo, ${studentName}.`;
   }
 
   document.getElementById('winStarsEarned').textContent = `+${earnedStars} Estrellas`;
@@ -732,6 +780,244 @@ function shuffleArray(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// --- CONFIGURACIÓN Y PERSONALIZACIÓN DE TABLAS Y PREMIOS ---
+function setupConfigView() {
+  const inputName = document.getElementById('inputStudentName');
+  const btnSaveName = document.getElementById('btnSaveName');
+
+  if (inputName) {
+    inputName.value = gameState.studentName || 'Isabella';
+  }
+
+  if (btnSaveName) {
+    btnSaveName.addEventListener('click', () => {
+      const newName = inputName.value.trim();
+      if (newName) {
+        gameState.studentName = newName;
+        saveState();
+        playSuccessSound();
+        alert(`¡Guardado! Peke ahora llamará a tu hija "${newName}".`);
+      }
+    });
+  }
+
+  // Presets rápidos de tablas
+  const btnPreset10 = document.getElementById('btnPreset10');
+  const btnPreset12 = document.getElementById('btnPreset12');
+  const btnPresetAll = document.getElementById('btnPresetAll');
+
+  if (btnPreset10) {
+    btnPreset10.addEventListener('click', () => {
+      playClickSound();
+      gameState.activeTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      saveState();
+      renderTablesToggleGrid();
+    });
+  }
+
+  if (btnPreset12) {
+    btnPreset12.addEventListener('click', () => {
+      playClickSound();
+      gameState.activeTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+      saveState();
+      renderTablesToggleGrid();
+    });
+  }
+
+  if (btnPresetAll) {
+    btnPresetAll.addEventListener('click', () => {
+      playClickSound();
+      gameState.activeTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+      saveState();
+      renderTablesToggleGrid();
+    });
+  }
+
+  // Agregar nuevo premio personalizado
+  const btnAdd = document.getElementById('btnAddReward');
+  if (btnAdd) {
+    btnAdd.addEventListener('click', () => {
+      const titleInput = document.getElementById('inputRewardTitle');
+      const costInput = document.getElementById('inputRewardCost');
+      const iconInput = document.getElementById('inputRewardIcon');
+
+      const title = titleInput.value.trim();
+      const cost = parseInt(costInput.value, 10);
+      const icon = iconInput.value.trim() || '🎁';
+
+      if (!title) {
+        alert('Por favor escribe un título para el premio.');
+        return;
+      }
+      if (isNaN(cost) || cost < 1) {
+        alert('Ingresa una cantidad de estrellas válida (ej. 30).');
+        return;
+      }
+
+      playSuccessSound();
+      const newReward = {
+        id: Date.now(),
+        title: title,
+        icon: icon,
+        costStars: cost,
+        redeemed: false
+      };
+
+      if (!Array.isArray(gameState.customRewards)) {
+        gameState.customRewards = [];
+      }
+      gameState.customRewards.push(newReward);
+      saveState();
+
+      titleInput.value = '';
+      costInput.value = '';
+      renderCustomRewardsList();
+    });
+  }
+}
+
+function renderTablesToggleGrid() {
+  const container = document.getElementById('tablesToggleGrid');
+  const badge = document.getElementById('activeCountBadge');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!Array.isArray(gameState.activeTables)) {
+    gameState.activeTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  }
+
+  for (let i = 1; i <= 12; i++) {
+    const btn = document.createElement('button');
+    const isActive = gameState.activeTables.includes(i);
+    btn.className = `table-toggle-btn ${isActive ? 'active' : ''}`;
+    btn.textContent = i;
+    btn.title = `Tabla del ${i}: ${isActive ? 'Activa' : 'Desactivada'}`;
+
+    btn.addEventListener('click', () => {
+      playClickSound();
+      if (gameState.activeTables.includes(i)) {
+        // No permitir dejar vacío (al menos 1 tabla requerida)
+        if (gameState.activeTables.length <= 1) {
+          alert('¡Debe haber al menos 1 tabla seleccionada!');
+          return;
+        }
+        gameState.activeTables = gameState.activeTables.filter(num => num !== i);
+      } else {
+        gameState.activeTables.push(i);
+        gameState.activeTables.sort((a, b) => a - b);
+      }
+      saveState();
+      renderTablesToggleGrid();
+    });
+
+    container.appendChild(btn);
+  }
+
+  if (badge) {
+    const count = gameState.activeTables.length;
+    badge.textContent = `${count} ${count === 1 ? 'tabla seleccionada' : 'tablas seleccionadas'} (El Desafío tendrá ${count} ${count === 1 ? 'ejercicio garantizado' : 'ejercicios garantizados'})`;
+  }
+}
+
+function renderCustomRewardsList() {
+  const container = document.getElementById('customRewardsList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!Array.isArray(gameState.customRewards) || gameState.customRewards.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No hay premios creados aún. ¡Agrega uno abajo!</p>';
+    return;
+  }
+
+  const currentStars = gameState.stars || 0;
+
+  gameState.customRewards.forEach(reward => {
+    const card = document.createElement('div');
+    const canRedeem = currentStars >= reward.costStars;
+    const progressPercent = Math.min(100, Math.round((currentStars / reward.costStars) * 100));
+
+    let cardClass = 'reward-card';
+    if (reward.redeemed) cardClass += ' redeemed';
+    else if (canRedeem) cardClass += ' can-redeem';
+
+    let actionBtnHtml = '';
+    if (reward.redeemed) {
+      actionBtnHtml = `
+        <button class="btn-redeem" onclick="viewTicket(${reward.id})" style="background: #3B82F6;">
+          🎟️ Ver Vale
+        </button>
+      `;
+    } else if (canRedeem) {
+      actionBtnHtml = `
+        <button class="btn-redeem" onclick="redeemReward(${reward.id})">
+          ✨ ¡Canjear!
+        </button>
+      `;
+    }
+
+    card.className = cardClass;
+    card.innerHTML = `
+      <div class="reward-icon-box">${reward.icon || '🎁'}</div>
+      <div class="reward-info">
+        <div class="reward-title-row">
+          <span class="reward-title">${reward.title}</span>
+          <span class="reward-cost">⭐ ${reward.costStars}</span>
+        </div>
+        <div class="reward-progress-bar">
+          <div class="reward-progress-fill" style="width: ${progressPercent}%;"></div>
+        </div>
+        <div class="reward-status-text">
+          ${reward.redeemed 
+            ? '✅ ¡Premio canjeado con éxito!' 
+            : canRedeem 
+              ? '🎉 ¡Meta alcanzada! Lista para canjear con papá.' 
+              : `Progreso: ${currentStars}/${reward.costStars} estrellas (faltan ${reward.costStars - currentStars})`}
+        </div>
+      </div>
+      ${actionBtnHtml}
+      <button class="btn-delete-reward" onclick="deleteReward(${reward.id})" title="Eliminar premio">🗑️</button>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function redeemReward(rewardId) {
+  const reward = gameState.customRewards.find(r => r.id === rewardId);
+  if (!reward) return;
+
+  reward.redeemed = true;
+  saveState();
+  playWinFanfare();
+  triggerConfetti();
+
+  viewTicket(rewardId);
+}
+
+function viewTicket(rewardId) {
+  const reward = gameState.customRewards.find(r => r.id === rewardId);
+  if (!reward) return;
+
+  document.getElementById('ticketRewardIcon').textContent = reward.icon || '🎁';
+  document.getElementById('ticketRewardTitle').textContent = reward.title;
+  document.getElementById('ticketStudentName').textContent = gameState.studentName || 'Isabella';
+
+  document.getElementById('modalTicket').classList.remove('hidden');
+}
+
+function closeTicketModal() {
+  document.getElementById('modalTicket').classList.add('hidden');
+  renderCustomRewardsList();
+}
+
+function deleteReward(rewardId) {
+  if (confirm('¿Deseas eliminar este premio?')) {
+    gameState.customRewards = gameState.customRewards.filter(r => r.id !== rewardId);
+    saveState();
+    renderCustomRewardsList();
+  }
 }
 
 // --- REGISTRO DE SERVICE WORKER PARA OFFLINE TOTAL ---

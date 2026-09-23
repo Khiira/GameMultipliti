@@ -54,6 +54,10 @@
       <span class="nav-icon">🏆</span>
       <span>Premios</span>
     </button>
+    <button class="nav-tab" data-view="view-config">
+      <span class="nav-icon">⚙️</span>
+      <span>Ajustes & Vales</span>
+    </button>
   </nav>
 
   <!-- Contenedor Principal de Vistas -->
@@ -256,9 +260,84 @@
         <!-- Generado dinámicamente -->
       </div>
 
+    </section>
+
+    <!-- VISTA 6: Ajustes y Vales Personalizados de Papá -->
+    <section id="view-config" class="view-section">
+      <div class="config-header">
+        <h2>⚙️ Ajustes & Vales Familiares</h2>
+        <p>Personaliza la experiencia para tu hija y crea premios reales para motivarla.</p>
+      </div>
+
+      <!-- Tarjeta 1: Nombre de la estudiante -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <span>👧</span>
+          <h3>Nombre de la Jugadora</h3>
+        </div>
+        <p class="config-desc">Peke saludará y animará a tu hija por su nombre en cada ejercicio.</p>
+        <div class="name-input-group">
+          <input type="text" id="inputStudentName" class="text-input" placeholder="Nombre (ej. Isabella)" maxlength="20">
+          <button id="btnSaveName" class="btn-primary-sm">Guardar Nombre</button>
+        </div>
+      </div>
+
+      <!-- Tarjeta 2: Tablas Activas y Desafío Garantizado -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <span>🔢</span>
+          <h3>Tablas a Evaluar y Gran Desafío</h3>
+        </div>
+        <p class="config-desc">
+          Elige qué tablas estarán activas. <strong>El Gran Desafío garantizará que aparezca al menos 1 ejercicio de cada una de las tablas seleccionadas:</strong>
+        </p>
+        
+        <div class="quick-table-presets">
+          <button id="btnPreset10" class="btn-preset">Hasta el 10 (4° Básico)</button>
+          <button id="btnPreset12" class="btn-preset">Hasta el 12 (Completo)</button>
+          <button id="btnPresetAll" class="btn-preset">Seleccionar Todas</button>
+        </div>
+
+        <div class="tables-toggle-grid" id="tablesToggleGrid">
+          <!-- Los 12 botones de activación de tablas se renderizan por JS -->
+        </div>
+        <div class="active-count-badge" id="activeCountBadge">
+          12 tablas seleccionadas (El Desafío tendrá 12 ejercicios garantizados)
+        </div>
+      </div>
+
+      <!-- Tarjeta 3: Vales y Premios de Papá -->
+      <div class="config-card">
+        <div class="config-card-title">
+          <span>🎁</span>
+          <h3>Vales y Premios de Papá</h3>
+        </div>
+        <p class="config-desc">
+          Crea recompensas de la vida real que tu hija puede canjear usando sus estrellas ⭐ ganadas jugando.
+        </p>
+
+        <!-- Lista de Vales Existentes -->
+        <div class="custom-rewards-list" id="customRewardsList">
+          <!-- Renderizado dinámicamente -->
+        </div>
+
+        <!-- Formulario para Nuevo Vale -->
+        <div class="add-reward-box">
+          <h4>➕ Agregar Nuevo Premio Familiar</h4>
+          <div class="reward-form-grid">
+            <input type="text" id="inputRewardTitle" class="text-input" placeholder="Ej: Ir al cine juntos, Paseo al parque..." maxlength="40">
+            <div class="reward-form-row">
+              <input type="number" id="inputRewardCost" class="text-input num-input" placeholder="Estrellas (ej. 40)" min="5" max="999">
+              <input type="text" id="inputRewardIcon" class="text-input emoji-input" placeholder="Emoji (ej. 🍦)" maxlength="4" value="🎁">
+              <button id="btnAddReward" class="btn-primary-sm">Crear Premio</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="reset-data-box">
         <button id="btnResetProgress" class="btn-text-danger" title="Reiniciar mi progreso">
-          🔄 Reiniciar avance (empezar de cero)
+          🔄 Reiniciar todo el avance (empezar de cero)
         </button>
       </div>
     </section>
@@ -313,6 +392,30 @@
           <span>🏠</span> Ir al menú
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VALE CANJEADO (Ticket Oficial de Peke) -->
+  <div id="modalTicket" class="modal-backdrop hidden">
+    <div class="modal-card ticket-card">
+      <div class="ticket-badge">🎟️ VALE OFICIAL DE PREMIO</div>
+      <div class="ticket-icon" id="ticketRewardIcon">🍦</div>
+      <h2 id="ticketRewardTitle">Ir por un rico helado</h2>
+      <p class="ticket-recipient">Otorgado con amor y orgullo a:</p>
+      <div class="ticket-student-name" id="ticketStudentName">Isabella</div>
+      <p class="ticket-reason">¡Por tu gran esfuerzo y dedicación dominando las tablas de multiplicar!</p>
+      
+      <div class="ticket-signature-box">
+        <span class="ticket-stamp">⭐ CANJEADO CON ÉXITO ⭐</span>
+        <div class="ticket-signature">
+          <span>Firmado con cariño:</span>
+          <strong>Peke la Hámster 🐹 & Papá</strong>
+        </div>
+      </div>
+
+      <button id="btnCloseTicket" class="btn-primary" style="margin-top: 20px; width: 100%;">
+        <span>🎉</span> ¡Guardar y Mostrar a Papá!
+      </button>
     </div>
   </div>
 
