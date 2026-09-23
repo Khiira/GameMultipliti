@@ -233,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupKeypad();
   setupCopisiButton();
   updateStatsDisplay();
+  setupPWAInstall();
 
   // Botón volver
   document.getElementById('btnBackToMenu').addEventListener('click', () => {
@@ -1251,6 +1252,95 @@ function deleteReward(rewardId) {
     saveState();
     renderCustomRewardsList();
     renderPremiosRewardsShowcase();
+  }
+}
+
+// --- MANEJO DE INSTALACIÓN PWA (ANDROID & IOS) ---
+let deferredInstallPrompt = null;
+
+function setupPWAInstall() {
+  const btnHeader = document.getElementById('btnInstallApp');
+  const btnBanner = document.getElementById('btnBannerInstall');
+  const modalGuide = document.getElementById('modalInstallGuide');
+  const btnCloseGuide = document.getElementById('btnCloseInstallGuide');
+  const stepsContent = document.getElementById('installStepsContent');
+
+  // Si ya está abierta como app instalada (standalone), ocultar botones
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) {
+    if (btnHeader) btnHeader.classList.add('hidden');
+    if (btnBanner) btnBanner.classList.add('hidden');
+    return;
+  }
+
+  // Detectar si es iOS (iPhone o iPad)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // Escuchar el evento nativo de instalación en Chrome / Android
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (btnHeader) btnHeader.classList.remove('hidden');
+    if (btnBanner) btnBanner.classList.remove('hidden');
+  });
+
+  // En iOS o navegadores móviles, mostrar el botón siempre para facilitar la instalación
+  if (isIOS || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    if (btnHeader) btnHeader.classList.remove('hidden');
+    if (btnBanner) btnBanner.classList.remove('hidden');
+  }
+
+  function handleInstallClick() {
+    playClickSound();
+    if (deferredInstallPrompt) {
+      // Activar prompt nativo de Chrome / Android
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('Peke PWA instalada con éxito');
+          if (btnHeader) btnHeader.classList.add('hidden');
+          if (btnBanner) btnBanner.classList.add('hidden');
+        }
+        deferredInstallPrompt = null;
+      });
+    } else {
+      // Si es iOS o Android sin prompt nativo en ese instante, mostrar la guía visual
+      showInstallGuide(isIOS);
+    }
+  }
+
+  if (btnHeader) btnHeader.addEventListener('click', handleInstallClick);
+  if (btnBanner) btnBanner.addEventListener('click', handleInstallClick);
+  if (btnCloseGuide) btnCloseGuide.addEventListener('click', () => modalGuide.classList.add('hidden'));
+
+  function showInstallGuide(isApple) {
+    if (!stepsContent || !modalGuide) return;
+    if (isApple) {
+      stepsContent.innerHTML = `
+        <div class="install-step">
+          <span class="step-num">1</span>
+          <div class="step-text">Toca el botón <strong>Compartir</strong> (ícono <strong>📤</strong>) en la barra inferior de Safari.</div>
+        </div>
+        <div class="install-step">
+          <span class="step-num">2</span>
+          <div class="step-text">Desliza hacia abajo y presiona <strong>"Agregar a la pantalla de inicio"</strong> ➕.</div>
+        </div>
+        <div class="install-tip">💡 ¡Listo! Isabella tendrá el ícono de Peke y <strong>podrá jugar 100% sin internet</strong> en cualquier lugar.</div>
+      `;
+    } else {
+      stepsContent.innerHTML = `
+        <div class="install-step">
+          <span class="step-num">1</span>
+          <div class="step-text">Toca el menú de <strong>3 puntos (⋮)</strong> en la esquina superior derecha de Chrome.</div>
+        </div>
+        <div class="install-step">
+          <span class="step-num">2</span>
+          <div class="step-text">Selecciona <strong>"Instalar aplicación"</strong> o <strong>"Agregar a la pantalla principal"</strong> 📲.</div>
+        </div>
+        <div class="install-tip">💡 ¡Listo! La app se agregará a su teléfono y <strong>funcionará siempre sin gastar datos ni WiFi</strong>.</div>
+      `;
+    }
+    modalGuide.classList.remove('hidden');
   }
 }
 

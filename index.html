@@ -6,6 +6,14 @@
   <title>Tablas de Multiplicar con Peke la Hámster 🐹</title>
   <meta name="description" content="Aprende y diviértete con las tablas de multiplicar del 1 al 12 junto a Peke la Hámster. 100% sin conexión para 4° básico.">
   <meta name="theme-color" content="#FFB74D">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Peke Tablas">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -22,6 +30,9 @@
     </div>
 
     <div class="top-stats">
+      <button id="btnInstallApp" class="btn-install-header hidden" title="Instalar en el celular para jugar sin internet">
+        <span>📲</span> Instalar
+      </button>
       <div class="stat-badge seeds-badge" title="Semillitas de girasol recolectadas">
         <span class="stat-icon">🌻</span>
         <span id="counterSeeds" class="stat-num">0</span>
@@ -100,6 +111,9 @@
         </div>
         <div class="peke-speech">
           <p id="pekeHomeMsg">¡Hola! Soy <strong>Peke</strong> 🐹. ¿Qué tabla practicamos hoy? ¡Gana semillitas para mi frasco!</p>
+          <button id="btnBannerInstall" class="banner-install-btn hidden">
+            <span>📲</span> Instalar en el Celular (¡Juega sin internet!)
+          </button>
         </div>
       </div>
 
@@ -471,6 +485,24 @@
 
       <button id="btnCloseTicket" class="btn-primary" style="margin-top: 20px; width: 100%;">
         <span>🎉</span> ¡Guardar y Mostrar a Papá!
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE GUÍA DE INSTALACIÓN (PARA CELULARES) -->
+  <div id="modalInstallGuide" class="modal-backdrop hidden">
+    <div class="modal-card install-card">
+      <div class="install-badge">📲 INSTALAR EN TU CELULAR</div>
+      <div class="install-icon">🐹</div>
+      <h2 style="font-size: 1.4rem; font-weight: 900; color: #C2410C; margin-bottom: 6px;">¡Juega con Peke sin internet!</h2>
+      <p class="install-subtitle">Para tener a Peke siempre en la pantalla de tu celular:</p>
+      
+      <div class="install-steps-box" id="installStepsContent">
+        <!-- Generado dinámicamente según iPhone o Android -->
+      </div>
+
+      <button id="btnCloseInstallGuide" class="btn-primary" style="margin-top: 16px; width: 100%;">
+        <span>👍</span> ¡Entendido!
       </button>
     </div>
   </div>
