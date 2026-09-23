@@ -1,10 +1,12 @@
 // Service Worker para funcionamiento 100% offline
-const CACHE_NAME = 'peke-tablas-cache-v1';
+const CACHE_NAME = 'peke-tablas-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './three.min.js',
+  './peke3d.js',
   './manifest.json',
   './icon.svg'
 ];

@@ -18,7 +18,8 @@ const defaultState = {
     { id: 3, title: 'Tarde de paseo o juegos favoritos', icon: '🎡', costStars: 80, redeemed: false }
   ],
   medals: [],
-  audio: true
+  audio: true,
+  voice: true
 };
 
 let gameState = loadState();
@@ -207,7 +208,18 @@ const PEKE_TRY_AGAIN = [
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupAudioToggle();
+  setupVoiceToggle();
   updateHomeWelcome();
+
+  // Iniciar Peke 3D si Three.js está listo
+  if (typeof initPeke3D === 'function') {
+    try {
+      initPeke3D('pekeAvatarBox');
+    } catch (e) {
+      console.warn('3D initialization fallback to SVG', e);
+    }
+  }
+
   renderTablesGrid();
   renderPitagoricaTable();
   renderMedalsGrid();
@@ -335,6 +347,36 @@ function setupAudioToggle() {
   });
 }
 
+function setupVoiceToggle() {
+  const btn = document.getElementById('btnVoiceToggle');
+  const icon = document.getElementById('voiceIcon');
+  if (!btn || !icon) return;
+
+  if (typeof pekeVoiceEnabled !== 'undefined') {
+    pekeVoiceEnabled = gameState.voice !== undefined ? gameState.voice : true;
+  }
+
+  function updateVoiceIcon() {
+    const isVOn = typeof pekeVoiceEnabled !== 'undefined' ? pekeVoiceEnabled : true;
+    icon.textContent = isVOn ? '🗣️' : '🤐';
+    btn.setAttribute('title', isVOn ? 'Voz de Peke activada' : 'Voz de Peke silenciada');
+  }
+
+  updateVoiceIcon();
+
+  btn.addEventListener('click', () => {
+    if (typeof pekeVoiceEnabled !== 'undefined') {
+      pekeVoiceEnabled = !pekeVoiceEnabled;
+      gameState.voice = pekeVoiceEnabled;
+      saveState();
+      updateVoiceIcon();
+      if (pekeVoiceEnabled && typeof speakPeke === 'function') {
+        speakPeke(`¡Hola, ${gameState.studentName || 'Isabella'}! ¡Aquí estoy!`);
+      }
+    }
+  });
+}
+
 // --- RENDERIZAR SELECTOR DE TABLAS (1 al 12) ---
 function renderTablesGrid() {
   const container = document.getElementById('tablesGrid');
@@ -458,6 +500,10 @@ function loadQuestion() {
   // Animación suave de Peke
   const avatarBox = document.getElementById('pekeAvatarBox');
   avatarBox.classList.remove('bounce');
+
+  if (currentGame.currentIndex === 0 && typeof speakPeke === 'function') {
+    speakPeke(`¡A practicar, ${gameState.studentName || 'Isabella'}! ¿Cuánto es ${q.a} por ${q.b}?`);
+  }
 }
 
 // --- ACTUALIZAR VISUALIZACIÓN DE RESPUESTA ---
@@ -535,10 +581,16 @@ function submitAnswer() {
       currentGame.firstTrySuccessCount++;
     }
 
-    // Peke celebra
+    // Peke celebra en 3D
     avatarBox.classList.add('bounce');
+    if (typeof triggerPekeJump === 'function') {
+      triggerPekeJump();
+    }
     const randomCheer = getPekeCheer();
     dialogue.textContent = randomCheer;
+    if (typeof speakPeke === 'function') {
+      speakPeke(randomCheer);
+    }
 
     checkMedals();
 
@@ -546,7 +598,7 @@ function submitAnswer() {
     setTimeout(() => {
       currentGame.currentIndex++;
       loadQuestion();
-    }, 700);
+    }, 750);
 
   } else {
     // RESPUESTA INCORRECTA (AMABLE Y SIN FRUSTRACIÓN) ❤️
@@ -556,6 +608,9 @@ function submitAnswer() {
 
     const randomEncourage = PEKE_TRY_AGAIN[Math.floor(Math.random() * PEKE_TRY_AGAIN.length)];
     dialogue.textContent = randomEncourage;
+    if (typeof speakPeke === 'function') {
+      speakPeke(randomEncourage);
+    }
 
     // Mostrar automáticamente la pista COPISI para que entienda el área
     showCopisi(q.a, q.b);
@@ -653,9 +708,15 @@ function finishRound() {
   if (currentGame.mode === 'desafio') {
     title.textContent = '¡Desafío Conquistado! 🎯';
     sub.textContent = `¡Eres toda una campeona de 4° básico, ${studentName}!`;
+    if (typeof speakPeke === 'function') {
+      speakPeke(`¡Increíble trabajo, ${studentName}! ¡Conquistaste el Gran Desafío!`);
+    }
   } else {
     title.textContent = `¡Tabla del ${currentGame.tableNum} Completada! 🎉`;
     sub.textContent = `Peke comió muchas semillitas y está súper feliz contigo, ${studentName}.`;
+    if (typeof speakPeke === 'function') {
+      speakPeke(`¡Excelente, ${studentName}! ¡Completaste la tabla del ${currentGame.tableNum}!`);
+    }
   }
 
   document.getElementById('winStarsEarned').textContent = `+${earnedStars} Estrellas`;
