@@ -23,7 +23,7 @@ const PEKE_SKIN_DATA = {
   glasses: { id: 'glasses', name: '👓 Profesora Sabia', badge: '👓 Profesora Sabia', quote: '¡Pip-pip! 🐹 ¡Tengo mis lentes listos para los trucos!' },
   suit: { id: 'suit', name: '🎩 Traje de Gala', badge: '🎩 Traje de Gala', quote: '¡Squee! 🐹 ¡Muy elegante para recibir tus premios!' },
   crown: { id: 'crown', name: '👑 Corona Campeona', badge: '👑 Corona Campeona', quote: '¡Pip-squeak! 👑 ¡La reina de las multiplicaciones!' },
-  sport: { id: 'sport', name: '🧢 Peke Deportista', badge: '🧢 Peke Deportista', quote: '¡Pip-pip! 🧢 ¡Gorra y silbato listos! ¡A entrenar las multiplicaciones!' },
+  sport: { id: 'sport', name: '🏅 Peke Atleta', badge: '🏅 Peke Atleta', quote: '¡Pip-pip! 🏅 ¡Vincha lista y medalla de campeona! ¡A entrenar multiplicaciones!' },
   default: { id: 'default', name: '🐹 Natural Clásica', badge: '🐹 Natural Clásica', quote: '¡Pip-pip! 🐹 ¡Peke esponjosa con su semillita!' }
 };
 
@@ -561,87 +561,118 @@ function buildSkinAccessories() {
   pekeSkins.crown = crownGroup;
 
   // ----------------------------------------------------
-  // 5. SKIN SPORT (Peke Deportista 🧢: Gorra Elevada, Silbato y Muñequeras)
+  // 5. SKIN SPORT (Peke Atleta Campeona 🏅: Vincha, Medalla y Muñequeras)
   // ----------------------------------------------------
   const sportGroup = new THREE.Group();
-  const matSportBlue = new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.35 }); // Azul atlético brillante
-  const matSportVisor = new THREE.MeshStandardMaterial({ color: 0x1D4ED8, roughness: 0.35 }); // Azul visera
-  const matSilver = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.15, metalness: 0.9 }); // Metal plateado silbato
-  const matCord = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.8 }); // Cordón
+  const matSportRed = new THREE.MeshStandardMaterial({ color: 0xEF4444, roughness: 0.45 }); // Rojo coral atlético
+  const matSportStripe = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.3 }); // Franja blanca
+  const matGoldMedal = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.18, metalness: 0.88 }); // Oro brillante
+  const matMedalRibbon = new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.5 }); // Cinta azul olímpica
 
-  // 1. Gorra deportiva elevada sobre la cabeza (NO tapa los ojos de Peke en Y=0.32)
-  const capGroup = new THREE.Group();
-  capGroup.position.set(0, 0.76, 0.04);
-  capGroup.rotation.x = -0.10; // Ligera inclinación hacia atrás, estilo visera deportiva fresca
+  // 1. Vincha deportiva elástica (Sweatband) que abraza suavemente la frente de Peke
+  // Puntos perimetrales sobre la frente (Y = 0.53, por encima de los ojos en Y = 0.32 y bajo las orejas en Y = 0.90)
+  const sweatbandPoints = [];
+  const sweatbandSegs = 20;
+  for (let i = 0; i < sweatbandSegs; i++) {
+    const theta = (i / sweatbandSegs) * Math.PI * 2;
+    const px = Math.sin(theta) * 0.92;
+    const pz = Math.cos(theta) * 0.87;
+    const py = 0.53 + Math.cos(theta) * 0.03; // Suave caída natural en la frente
+    sweatbandPoints.push(new THREE.Vector3(px, py, pz));
+  }
+  const sweatbandCurve = new THREE.CatmullRomCurve3(sweatbandPoints, true);
+  const sweatbandGeo = new THREE.TubeGeometry(sweatbandCurve, 48, 0.062, 12, true);
+  const sweatband = new THREE.Mesh(sweatbandGeo, matSportRed);
+  sportGroup.add(sweatband);
 
-  // Casquete / Cúpula superior de la gorra
-  const capDomeGeo = new THREE.SphereGeometry(0.68, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.46);
-  capDomeGeo.scale(1.02, 0.86, 0.96);
-  const capDome = new THREE.Mesh(capDomeGeo, matSportBlue);
-  capGroup.add(capDome);
+  // Franja blanca central atlética
+  const stripeGeo = new THREE.TubeGeometry(sweatbandCurve, 48, 0.022, 10, true);
+  const stripeMesh = new THREE.Mesh(stripeGeo, matSportStripe);
+  sportGroup.add(stripeMesh);
 
-  // Botón superior blanco de la gorra
-  const capBtnGeo = new THREE.SphereGeometry(0.045, 8, 8);
-  const capBtn = new THREE.Mesh(capBtnGeo, matWhite);
-  capBtn.position.set(0, 0.56, 0.02);
-  capGroup.add(capBtn);
+  // Emblema frontal dorado en la vincha (estrella de campeona)
+  const emblemGeo = new THREE.ConeGeometry(0.048, 0.025, 5);
+  const emblem = new THREE.Mesh(emblemGeo, matGoldMedal);
+  emblem.position.set(0, 0.56, 0.94);
+  emblem.rotation.x = Math.PI / 2;
+  sportGroup.add(emblem);
 
-  // Visera deportiva saliente que nace arriba de la frente (Y=0.68) y se proyecta hacia adelante
-  const visorGeo = new THREE.CylinderGeometry(0.52, 0.55, 0.04, 20, 1, false, -Math.PI * 0.36, Math.PI * 0.72);
-  const visor = new THREE.Mesh(visorGeo, matSportVisor);
-  visor.position.set(0, -0.04, 0.56);
-  visor.rotation.x = 0.28;
-  capGroup.add(visor);
+  // Nudo y lazos ondeantes al costado izquierdo de la vincha
+  const knotGeo = new THREE.SphereGeometry(0.065, 10, 10);
+  const knot = new THREE.Mesh(knotGeo, matSportRed);
+  knot.position.set(-0.90, 0.53, -0.06);
+  sportGroup.add(knot);
 
-  // Ribete blanco en el borde de la visera
-  const visorTrimGeo = new THREE.CylinderGeometry(0.555, 0.565, 0.025, 20, 1, false, -Math.PI * 0.36, Math.PI * 0.72);
-  const visorTrim = new THREE.Mesh(visorTrimGeo, matWhite);
-  visorTrim.position.set(0, -0.04, 0.57);
-  visorTrim.rotation.x = 0.28;
-  capGroup.add(visorTrim);
+  // Cinta ondeante 1 (hacia atrás y abajo)
+  const ribbon1Curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.90, 0.53, -0.06),
+    new THREE.Vector3(-1.02, 0.44, -0.22),
+    new THREE.Vector3(-1.10, 0.30, -0.38)
+  ]);
+  const ribbon1 = new THREE.Mesh(new THREE.TubeGeometry(ribbon1Curve, 16, 0.032, 8, false), matSportRed);
+  sportGroup.add(ribbon1);
 
-  sportGroup.add(capGroup);
+  // Cinta ondeante 2
+  const ribbon2Curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.90, 0.51, -0.06),
+    new THREE.Vector3(-0.98, 0.38, -0.16),
+    new THREE.Vector3(-1.05, 0.20, -0.28)
+  ]);
+  const ribbon2 = new THREE.Mesh(new THREE.TubeGeometry(ribbon2Curve, 16, 0.028, 8, false), matSportRed);
+  sportGroup.add(ribbon2);
 
-  // 2. Silbato metálico de entrenadora colgando en el pecho
-  const lanyardGeo = new THREE.TorusGeometry(0.52, 0.018, 10, 24, Math.PI * 0.90);
-  const lanyard = new THREE.Mesh(lanyardGeo, matCord);
-  lanyard.position.set(0, 0.03, 0.86);
-  lanyard.rotation.x = 0.70;
-  sportGroup.add(lanyard);
+  // 2. Medalla de Oro de Campeona 🏅 en el pecho
+  // Cinta de cuello en U
+  const neckRibbonCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.46, 0.24, 0.65),
+    new THREE.Vector3(-0.25, 0.04, 0.92),
+    new THREE.Vector3( 0.00, -0.09, 1.00),
+    new THREE.Vector3( 0.25, 0.04, 0.92),
+    new THREE.Vector3( 0.46, 0.24, 0.65)
+  ]);
+  const neckRibbon = new THREE.Mesh(new THREE.TubeGeometry(neckRibbonCurve, 24, 0.024, 8, false), matMedalRibbon);
+  sportGroup.add(neckRibbon);
 
-  const whistleGroup = new THREE.Group();
-  whistleGroup.position.set(0, -0.20, 1.04);
-  whistleGroup.rotation.x = -0.22;
+  // Disco y relieve de la medalla dorada
+  const medalGroup = new THREE.Group();
+  medalGroup.position.set(0, -0.14, 1.03);
+  medalGroup.rotation.x = 0.12;
 
-  // Cámara redonda de resonancia del silbato
-  const whistleBulb = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.07, 16), matSilver);
-  whistleBulb.rotation.z = Math.PI / 2;
-  whistleGroup.add(whistleBulb);
+  const medalDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.028, 24), matGoldMedal);
+  medalDisc.rotation.x = Math.PI / 2;
+  medalGroup.add(medalDisc);
 
-  // Boquilla del silbato hacia arriba
-  const whistleMouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.11, 0.05), matSilver);
-  whistleMouth.position.set(0, 0.06, 0);
-  whistleGroup.add(whistleMouth);
+  const medalRim = new THREE.Mesh(new THREE.TorusGeometry(0.138, 0.016, 8, 24), matGoldMedal);
+  medalGroup.add(medalRim);
 
-  sportGroup.add(whistleGroup);
+  const medalStar = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.02, 5), matSportStripe);
+  medalStar.position.set(0, 0, 0.018);
+  medalStar.rotation.x = Math.PI / 2;
+  medalGroup.add(medalStar);
 
-  // 3. Muñequeras deportivas en las dos patitas delanteras
+  const medalRing = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.01, 8, 16), matGoldMedal);
+  medalRing.position.set(0, 0.16, 0);
+  medalGroup.add(medalRing);
+
+  sportGroup.add(medalGroup);
+
+  // 3. Muñequeras deportivas de felpa en ambas patitas
   const wristGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.09, 14);
   const wristTrimGeo = new THREE.CylinderGeometry(0.135, 0.135, 0.03, 14);
 
   // Muñequera izquierda
-  const wristLeft = new THREE.Mesh(wristGeo, matSportBlue);
+  const wristLeft = new THREE.Mesh(wristGeo, matSportRed);
   wristLeft.position.set(-0.25, -0.36, 0.86);
   wristLeft.rotation.z = -0.25;
-  const wristTrimL = new THREE.Mesh(wristTrimGeo, matWhite);
+  const wristTrimL = new THREE.Mesh(wristTrimGeo, matSportStripe);
   wristLeft.add(wristTrimL);
   sportGroup.add(wristLeft);
 
   // Muñequera derecha
-  const wristRight = new THREE.Mesh(wristGeo, matSportBlue);
+  const wristRight = new THREE.Mesh(wristGeo, matSportRed);
   wristRight.position.set(0.25, -0.36, 0.86);
   wristRight.rotation.z = 0.25;
-  const wristTrimR = new THREE.Mesh(wristTrimGeo, matWhite);
+  const wristTrimR = new THREE.Mesh(wristTrimGeo, matSportStripe);
   wristRight.add(wristTrimR);
   sportGroup.add(wristRight);
 
@@ -743,6 +774,25 @@ function animatePeke3D() {
         if (pekeLeftEar && pekeRightEar) {
           pekeLeftEar.rotation.z = 0.25 + beat * 0.12;
           pekeRightEar.rotation.z = -0.25 - beat * 0.12;
+        }
+      } else if (currentSkin === 'sport') {
+        // --- TROTE ATLETA ENÉRGICO ("Jogging") 🏃‍♀️🏅 ---
+        const jogSpeed = 6.2;
+        const jogStep = Math.sin(clock * jogSpeed);
+        const jogBob = Math.abs(jogStep);
+
+        // Rebote elástico ágil de trote de corredora
+        pekeHamsterGroup.position.y = jogBob * 0.08 - 0.02;
+        // Balanceo rítmico atlético de costado
+        pekeHamsterGroup.rotation.z = Math.sin(clock * (jogSpeed * 0.5)) * 0.06;
+        // Pequeña inclinación dinámica hacia adelante al trotar
+        pekeHamsterGroup.rotation.x += ((pekeTargetRotation.x + 0.08) - pekeHamsterGroup.rotation.x) * 0.08;
+        pekeHamsterGroup.rotation.y += (pekeTargetRotation.y - pekeHamsterGroup.rotation.y) * 0.08;
+
+        // Orejitas balanceándose al ritmo del trote deportivo
+        if (pekeLeftEar && pekeRightEar) {
+          pekeLeftEar.rotation.z = 0.25 + jogStep * 0.10;
+          pekeRightEar.rotation.z = -0.25 - jogStep * 0.10;
         }
       } else {
         // Modo estándar: respiración suave y seguimiento del puntero
