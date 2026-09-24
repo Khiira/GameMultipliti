@@ -621,35 +621,38 @@ function buildSkinAccessories() {
   const ribbon2 = new THREE.Mesh(new THREE.TubeGeometry(ribbon2Curve, 16, 0.028, 8, false), matSportRed);
   sportGroup.add(ribbon2);
 
-  // 2. Medalla de Oro de Campeona 🏅 en el pecho
-  // Cinta de cuello en U
+  // 2. Medalla de Oro de Campeona 🏅 en el pecho (Completamente al frente y 100% visible)
   const neckRibbonCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.46, 0.24, 0.65),
-    new THREE.Vector3(-0.25, 0.04, 0.92),
-    new THREE.Vector3( 0.00, -0.09, 1.00),
-    new THREE.Vector3( 0.25, 0.04, 0.92),
-    new THREE.Vector3( 0.46, 0.24, 0.65)
+    new THREE.Vector3(-0.44, 0.28, 0.65),
+    new THREE.Vector3(-0.24, 0.12, 0.98),
+    new THREE.Vector3( 0.00, 0.04, 1.12), // Conexión exacta en la argolla
+    new THREE.Vector3( 0.24, 0.12, 0.98),
+    new THREE.Vector3( 0.44, 0.28, 0.65)
   ]);
   const neckRibbon = new THREE.Mesh(new THREE.TubeGeometry(neckRibbonCurve, 24, 0.024, 8, false), matMedalRibbon);
   sportGroup.add(neckRibbon);
 
-  // Disco y relieve de la medalla dorada
+  // Grupo de la medalla en Z = 1.14 (libre de colisión con la pancita en Z = 1.06)
   const medalGroup = new THREE.Group();
-  medalGroup.position.set(0, -0.14, 1.03);
-  medalGroup.rotation.x = 0.12;
+  medalGroup.position.set(0, -0.10, 1.14);
+  medalGroup.rotation.x = -0.05; // Orientada de frente a la cámara para ver el círculo completo
 
-  const medalDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.028, 24), matGoldMedal);
+  // Disco dorado completo de 360 grados
+  const medalDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.155, 0.028, 28), matGoldMedal);
   medalDisc.rotation.x = Math.PI / 2;
   medalGroup.add(medalDisc);
 
-  const medalRim = new THREE.Mesh(new THREE.TorusGeometry(0.138, 0.016, 8, 24), matGoldMedal);
+  // Borde exterior en relieve
+  const medalRim = new THREE.Mesh(new THREE.TorusGeometry(0.142, 0.018, 10, 28), matGoldMedal);
   medalGroup.add(medalRim);
 
-  const medalStar = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.02, 5), matSportStripe);
+  // Estrella de campeona en el centro
+  const medalStar = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.022, 5), matSportStripe);
   medalStar.position.set(0, 0, 0.018);
   medalStar.rotation.x = Math.PI / 2;
   medalGroup.add(medalStar);
 
+  // Argolla superior de enganche
   const medalRing = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.01, 8, 16), matGoldMedal);
   medalRing.position.set(0, 0.16, 0);
   medalGroup.add(medalRing);
@@ -693,6 +696,11 @@ function setPekeSkin(skinId, playSound = false) {
       pekeSkins[key].visible = (key === targetId);
     }
   });
+
+  // Ocultar semillita si la skin tiene medalla deportiva en el pecho
+  if (pekeHeldSeed) {
+    pekeHeldSeed.visible = (targetId !== 'sport');
+  }
 
   // Reacción sonora y saltito alegre si es cambio manual
   if (playSound) {
