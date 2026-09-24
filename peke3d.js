@@ -14,8 +14,21 @@ let pekeVoiceEnabled = true;
 
 let currentContainerId = null;
 
+// Sistema de Skins 3D Dinámicas para Peke
+let pekeSkins = {};
+let currentSkin = 'default';
+
+const PEKE_SKIN_DATA = {
+  dance: { id: 'dance', name: '🎵 Fiesta Bailando', badge: '🎵 Fiesta Bailando', quote: '¡Pip-pip! 🐹 ¡Amo bailar mientras aprendemos!' },
+  glasses: { id: 'glasses', name: '👓 Profesora Sabia', badge: '👓 Profesora Sabia', quote: '¡Pip-pip! 🐹 ¡Tengo mis lentes listos para los trucos!' },
+  suit: { id: 'suit', name: '🎩 Traje de Gala', badge: '🎩 Traje de Gala', quote: '¡Squee! 🐹 ¡Muy elegante para recibir tus premios!' },
+  crown: { id: 'crown', name: '👑 Corona Campeona', badge: '👑 Corona Campeona', quote: '¡Pip-squeak! 👑 ¡La reina de las multiplicaciones!' },
+  sport: { id: 'sport', name: '🥋 Cinta Deportiva', badge: '🥋 Cinta Deportiva', quote: '¡Nom-nom! 🥋 ¡Entrenamiento al máximo!' },
+  default: { id: 'default', name: '🐹 Natural Clásica', badge: '🐹 Natural Clásica', quote: '¡Pip-pip! 🐹 ¡Peke esponjosa con su semillita!' }
+};
+
 // Inicializar Peke 3D
-function initPeke3D(containerId = 'pekeHomeAvatarBox') {
+function initPeke3D(containerId = 'pekeHomeAvatarBox', defaultSkin = null) {
   const container = document.getElementById(containerId);
   if (!container || typeof THREE === 'undefined') return;
 
@@ -56,6 +69,18 @@ function initPeke3D(containerId = 'pekeHomeAvatarBox') {
   // Construir a Peke en 3D
   buildHamsterModel();
 
+  // Asignar skin según contenedor
+  let targetSkin = defaultSkin;
+  if (!targetSkin) {
+    if (containerId === 'pekeHomeAvatarBox') targetSkin = 'dance';
+    else if (containerId === 'pekePitagoricaAvatarBox') targetSkin = 'glasses';
+    else if (containerId === 'pekePremiosAvatarBox') targetSkin = 'suit';
+    else if (containerId === 'pekeDesafioAvatarBox') targetSkin = 'crown';
+    else if (containerId === 'pekeAvatarBox') targetSkin = 'sport';
+    else targetSkin = 'default';
+  }
+  setPekeSkin(targetSkin);
+
   // Escuchar movimiento del mouse o touch para que Peke mire al cursor
   window.addEventListener('mousemove', onMouseMovePeke);
   window.addEventListener('touchmove', onTouchMovePeke);
@@ -81,9 +106,9 @@ function initPeke3D(containerId = 'pekeHomeAvatarBox') {
   animatePeke3D();
 }
 
-function movePeke3D(targetContainerId) {
+function movePeke3D(targetContainerId, forceSkin = null) {
   if (!pekeRenderer || !pekeRenderer.domElement) {
-    initPeke3D(targetContainerId);
+    initPeke3D(targetContainerId, forceSkin);
     return;
   }
   const target = document.getElementById(targetContainerId);
@@ -92,6 +117,18 @@ function movePeke3D(targetContainerId) {
   target.innerHTML = '';
   target.appendChild(pekeRenderer.domElement);
   currentContainerId = targetContainerId;
+
+  // Asignar skin temática según el espacio
+  let targetSkin = forceSkin;
+  if (!targetSkin) {
+    if (targetContainerId === 'pekeHomeAvatarBox') targetSkin = 'dance';
+    else if (targetContainerId === 'pekePitagoricaAvatarBox') targetSkin = 'glasses';
+    else if (targetContainerId === 'pekePremiosAvatarBox') targetSkin = 'suit';
+    else if (targetContainerId === 'pekeDesafioAvatarBox') targetSkin = 'crown';
+    else if (targetContainerId === 'pekeAvatarBox') targetSkin = 'sport';
+    else targetSkin = 'default';
+  }
+  setPekeSkin(targetSkin);
 
   const width = Math.max(110, target.clientWidth || 110);
   const height = Math.max(110, target.clientHeight || 110);
@@ -263,9 +300,309 @@ function buildHamsterModel() {
   footRight.position.set(0.65, -0.95, 0.3);
   pekeHamsterGroup.add(footRight);
 
+  // 7. CONSTRUIR ACCESORIOS DE SKINS 3D
+  buildSkinAccessories();
+
   // Ajuste de escala global
   pekeHamsterGroup.scale.set(0.9, 0.9, 0.9);
   pekeScene.add(pekeHamsterGroup);
+}
+
+// ========================================================
+// SISTEMA DE ACCESORIOS Y SKINS 3D PARA PEKE
+// ========================================================
+function buildSkinAccessories() {
+  pekeSkins = {};
+
+  // Materiales compartidos
+  const matGlassesGold = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.25, metalness: 0.85 });
+  const matGlassLens = new THREE.MeshStandardMaterial({ color: 0xBAE6FD, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.38 });
+  const matBowTie = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.35 });
+  const matHat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.4 });
+  const matShirt = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+  const matGoldButton = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.2, metalness: 0.85 });
+  const matHeadbandDJ = new THREE.MeshStandardMaterial({ color: 0x8B5CF6, roughness: 0.3, metalness: 0.4 });
+  const matCupsDJ = new THREE.MeshStandardMaterial({ color: 0xEC4899, roughness: 0.35, metalness: 0.2 });
+  const matCupInner = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5 });
+
+  // ----------------------------------------------------
+  // 1. SKIN GLASSES (Peke Profesora Sabia con Lentes 👓)
+  // ----------------------------------------------------
+  const glassesGroup = new THREE.Group();
+
+  // Aros de los lentes (Torus)
+  const rimGeo = new THREE.TorusGeometry(0.23, 0.032, 14, 28);
+  const leftRim = new THREE.Mesh(rimGeo, matGlassesGold);
+  leftRim.position.set(-0.38, 0.32, 0.96);
+  glassesGroup.add(leftRim);
+
+  const rightRim = new THREE.Mesh(rimGeo, matGlassesGold);
+  rightRim.position.set(0.38, 0.32, 0.96);
+  glassesGroup.add(rightRim);
+
+  // Cristal con sutil reflejo celeste
+  const lensGeo = new THREE.CircleGeometry(0.20, 20);
+  const leftLens = new THREE.Mesh(lensGeo, matGlassLens);
+  leftLens.position.set(-0.38, 0.32, 0.95);
+  glassesGroup.add(leftLens);
+
+  const rightLens = new THREE.Mesh(lensGeo, matGlassLens);
+  rightLens.position.set(0.38, 0.32, 0.95);
+  glassesGroup.add(rightLens);
+
+  // Puente nasal
+  const bridgeGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.30, 8);
+  const bridge = new THREE.Mesh(bridgeGeo, matGlassesGold);
+  bridge.rotation.z = Math.PI / 2;
+  bridge.position.set(0, 0.33, 0.98);
+  glassesGroup.add(bridge);
+
+  // Patillas laterales hacia las orejas
+  const armGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.65, 8);
+  const leftArm = new THREE.Mesh(armGeo, matGlassesGold);
+  leftArm.rotation.x = Math.PI / 2;
+  leftArm.rotation.y = -0.28;
+  leftArm.position.set(-0.62, 0.32, 0.65);
+  glassesGroup.add(leftArm);
+
+  const rightArm = new THREE.Mesh(armGeo, matGlassesGold);
+  rightArm.rotation.x = Math.PI / 2;
+  rightArm.rotation.y = 0.28;
+  rightArm.position.set(0.62, 0.32, 0.65);
+  glassesGroup.add(rightArm);
+
+  glassesGroup.visible = false;
+  pekeHamsterGroup.add(glassesGroup);
+  pekeSkins.glasses = glassesGroup;
+
+  // ----------------------------------------------------
+  // 2. SKIN SUIT ("Con treja" / Traje de Gala y Moño 🎩)
+  // ----------------------------------------------------
+  const suitGroup = new THREE.Group();
+
+  // Pechera de camisa blanca en el pecho
+  const shirtGeo = new THREE.SphereGeometry(0.50, 16, 14);
+  shirtGeo.scale(0.7, 0.8, 0.25);
+  const shirtMesh = new THREE.Mesh(shirtGeo, matShirt);
+  shirtMesh.position.set(0, -0.24, 0.96);
+  suitGroup.add(shirtMesh);
+
+  // Moño / Corbata michi roja en el cuello
+  const bowKnotGeo = new THREE.SphereGeometry(0.085, 12, 10);
+  const bowKnot = new THREE.Mesh(bowKnotGeo, matBowTie);
+  bowKnot.position.set(0, -0.09, 1.05);
+  suitGroup.add(bowKnot);
+
+  const bowWingGeo = new THREE.ConeGeometry(0.13, 0.25, 12);
+  const bowLeft = new THREE.Mesh(bowWingGeo, matBowTie);
+  bowLeft.position.set(-0.16, -0.09, 1.03);
+  bowLeft.rotation.z = -Math.PI / 2;
+  suitGroup.add(bowLeft);
+
+  const bowRight = new THREE.Mesh(bowWingGeo, matBowTie);
+  bowRight.position.set(0.16, -0.09, 1.03);
+  bowRight.rotation.z = Math.PI / 2;
+  suitGroup.add(bowRight);
+
+  // Botones dorados de gala
+  const btn1 = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 8), matGoldButton);
+  btn1.position.set(0, -0.22, 1.06);
+  suitGroup.add(btn1);
+
+  const btn2 = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 8), matGoldButton);
+  btn2.position.set(0, -0.34, 1.03);
+  suitGroup.add(btn2);
+
+  // Sombrero de copa alta elegante (Top Hat)
+  const hatGroup = new THREE.Group();
+  hatGroup.position.set(0, 0.98, 0.05);
+  hatGroup.rotation.z = -0.12;
+  hatGroup.rotation.x = -0.06;
+
+  // Ala del sombrero
+  const brimGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.05, 24);
+  const brim = new THREE.Mesh(brimGeo, matHat);
+  hatGroup.add(brim);
+
+  // Copa del sombrero
+  const hatCrownGeo = new THREE.CylinderGeometry(0.34, 0.36, 0.50, 24);
+  const hatCrownMesh = new THREE.Mesh(hatCrownGeo, matHat);
+  hatCrownMesh.position.y = 0.26;
+  hatGroup.add(hatCrownMesh);
+
+  // Cinta roja del sombrero
+  const ribbonGeo = new THREE.CylinderGeometry(0.365, 0.365, 0.10, 24);
+  const ribbon = new THREE.Mesh(ribbonGeo, matBowTie);
+  ribbon.position.y = 0.07;
+  hatGroup.add(ribbon);
+
+  suitGroup.add(hatGroup);
+
+  suitGroup.visible = false;
+  pekeHamsterGroup.add(suitGroup);
+  pekeSkins.suit = suitGroup;
+
+  // ----------------------------------------------------
+  // 3. SKIN DANCE (Audífonos DJ & Fiesta 🎧 + Baile)
+  // ----------------------------------------------------
+  const danceGroup = new THREE.Group();
+
+  // Diadema de audífonos sobre la cabeza
+  const archGeo = new THREE.TorusGeometry(0.78, 0.055, 12, 32, Math.PI * 0.92);
+  const arch = new THREE.Mesh(archGeo, matHeadbandDJ);
+  arch.rotation.z = -Math.PI * 0.96 / 2;
+  arch.rotation.x = 0.05;
+  arch.position.set(0, 0.62, 0.08);
+  danceGroup.add(arch);
+
+  // Auricular izquierdo
+  const cupGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.14, 18);
+  const leftCup = new THREE.Mesh(cupGeo, matCupsDJ);
+  leftCup.position.set(-0.76, 0.55, 0.12);
+  leftCup.rotation.z = -0.35;
+  danceGroup.add(leftCup);
+
+  const leftPad = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.04, 16), matCupInner);
+  leftPad.position.set(-0.70, 0.55, 0.12);
+  leftPad.rotation.z = -0.35;
+  danceGroup.add(leftPad);
+
+  // Auricular derecho
+  const rightCup = new THREE.Mesh(cupGeo, matCupsDJ);
+  rightCup.position.set(0.76, 0.55, 0.12);
+  rightCup.rotation.z = 0.35;
+  danceGroup.add(rightCup);
+
+  const rightPad = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.04, 16), matCupInner);
+  rightPad.position.set(0.70, 0.55, 0.12);
+  rightPad.rotation.z = 0.35;
+  danceGroup.add(rightPad);
+
+  danceGroup.visible = false;
+  pekeHamsterGroup.add(danceGroup);
+  pekeSkins.dance = danceGroup;
+
+  // ----------------------------------------------------
+  // 4. SKIN CROWN (Corona Dorada Real 👑)
+  // ----------------------------------------------------
+  const crownGroup = new THREE.Group();
+  crownGroup.position.set(0, 0.96, 0.06);
+  crownGroup.rotation.x = -0.05;
+
+  const matRuby = new THREE.MeshStandardMaterial({ color: 0xEF4444, roughness: 0.1, metalness: 0.6 });
+  const matEmerald = new THREE.MeshStandardMaterial({ color: 0x10B981, roughness: 0.1, metalness: 0.6 });
+
+  // Base circular de la corona
+  const crownBaseGeo = new THREE.CylinderGeometry(0.35, 0.32, 0.10, 20);
+  const crownBase = new THREE.Mesh(crownBaseGeo, matGlassesGold);
+  crownGroup.add(crownBase);
+
+  // Puntas de la corona (5 picos en círculo)
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
+    const px = Math.cos(angle) * 0.30;
+    const pz = Math.sin(angle) * 0.30;
+
+    const spikeGeo = new THREE.ConeGeometry(0.07, 0.18, 8);
+    const spike = new THREE.Mesh(spikeGeo, matGlassesGold);
+    spike.position.set(px, 0.14, pz);
+    crownGroup.add(spike);
+
+    // Gema en la punta del pico
+    const gemGeo = new THREE.SphereGeometry(0.035, 8, 8);
+    const gemMat = (i % 2 === 0) ? matRuby : matEmerald;
+    const gem = new THREE.Mesh(gemGeo, gemMat);
+    gem.position.set(px, 0.23, pz);
+    crownGroup.add(gem);
+  }
+
+  crownGroup.visible = false;
+  pekeHamsterGroup.add(crownGroup);
+  pekeSkins.crown = crownGroup;
+
+  // ----------------------------------------------------
+  // 5. SKIN SPORT (Cinta Deportiva / Ninja 🥋)
+  // ----------------------------------------------------
+  const sportGroup = new THREE.Group();
+  const matHeadbandSport = new THREE.MeshStandardMaterial({ color: 0xEF4444, roughness: 0.4 });
+
+  // Vincha en la frente
+  const sportBandGeo = new THREE.TorusGeometry(0.92, 0.055, 12, 32);
+  const sportBand = new THREE.Mesh(sportBandGeo, matHeadbandSport);
+  sportBand.rotation.x = 0.48;
+  sportBand.position.set(0, 0.42, 0.40);
+  sportGroup.add(sportBand);
+
+  // Estrella bordada en el centro de la frente
+  const starGeo = new THREE.SphereGeometry(0.06, 10, 8);
+  starGeo.scale(1.0, 1.0, 0.3);
+  const starMesh = new THREE.Mesh(starGeo, matGlassesGold);
+  starMesh.position.set(0, 0.60, 0.86);
+  sportGroup.add(starMesh);
+
+  // Cintas de la vincha cayendo hacia atrás
+  const tailGeo = new THREE.CylinderGeometry(0.03, 0.02, 0.45, 8);
+  const tail1 = new THREE.Mesh(tailGeo, matHeadbandSport);
+  tail1.position.set(-0.75, 0.35, 0.0);
+  tail1.rotation.z = 0.5;
+  tail1.rotation.x = 0.3;
+  sportGroup.add(tail1);
+
+  const tail2 = new THREE.Mesh(tailGeo, matHeadbandSport);
+  tail2.position.set(-0.78, 0.28, -0.05);
+  tail2.rotation.z = 0.7;
+  sportGroup.add(tail2);
+
+  sportGroup.visible = false;
+  pekeHamsterGroup.add(sportGroup);
+  pekeSkins.sport = sportGroup;
+}
+
+// Cambiar skin activa de Peke
+function setPekeSkin(skinId, playSound = false) {
+  if (!pekeSkins) return;
+  const targetId = (pekeSkins[skinId] || skinId === 'default') ? skinId : 'default';
+  currentSkin = targetId;
+
+  // Actualizar visibilidad de accesorios
+  Object.keys(pekeSkins).forEach(key => {
+    if (pekeSkins[key]) {
+      pekeSkins[key].visible = (key === targetId);
+    }
+  });
+
+  // Reacción sonora y saltito alegre si es cambio manual
+  if (playSound) {
+    triggerPekeJump();
+    playHamsterSound('happy');
+  }
+
+  // Actualizar badges e interfaz
+  updateActiveSkinBadge(targetId);
+}
+
+function updateActiveSkinBadge(skinId) {
+  const meta = PEKE_SKIN_DATA[skinId] || PEKE_SKIN_DATA.default;
+
+  // Actualizar texto en los badges visibles
+  document.querySelectorAll('.peke-skin-badge').forEach(badge => {
+    badge.textContent = meta.badge;
+  });
+
+  // Resaltar botón en el ropero
+  document.querySelectorAll('.skin-btn').forEach(btn => {
+    if (btn.getAttribute('data-skin') === skinId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function cyclePekeSkin() {
+  const skinKeys = ['dance', 'glasses', 'suit', 'crown', 'sport', 'default'];
+  const nextIdx = (skinKeys.indexOf(currentSkin) + 1) % skinKeys.length;
+  setPekeSkin(skinKeys[nextIdx], true);
 }
 
 // Seguimiento del cursor suave (Peke mira al puntero)
@@ -295,20 +632,42 @@ function animatePeke3D() {
   clock += 0.05;
 
   if (pekeHamsterGroup) {
-    // 1. Respiración suave e inactividad tierna
+    // 1. Animación corporal principal (baile continuo vs respiración suave)
     if (!isPekeJumping) {
-      pekeHamsterGroup.position.y = Math.sin(clock * 2) * 0.04;
-      pekeHamsterGroup.rotation.y += (pekeTargetRotation.y - pekeHamsterGroup.rotation.y) * 0.08;
-      pekeHamsterGroup.rotation.x += (pekeTargetRotation.x - pekeHamsterGroup.rotation.x) * 0.08;
+      if (currentSkin === 'dance') {
+        // --- BAILE RÍTMICO ALEGRE ("Bailando") ---
+        const danceSpeed = 4.8;
+        const beat = Math.sin(clock * danceSpeed);
+
+        // Rebote rítmico alegre de patitas
+        pekeHamsterGroup.position.y = Math.abs(beat) * 0.16 - 0.04;
+        // Meneíto rítmico de cadera
+        pekeHamsterGroup.rotation.z = beat * 0.12;
+        // Giros suaves al compás del ritmo
+        pekeHamsterGroup.rotation.y += ((pekeTargetRotation.y + Math.cos(clock * danceSpeed * 0.5) * 0.22) - pekeHamsterGroup.rotation.y) * 0.1;
+        pekeHamsterGroup.rotation.x += (pekeTargetRotation.x - pekeHamsterGroup.rotation.x) * 0.08;
+
+        // Sacudida rítmica de orejitas al ritmo musical
+        if (pekeLeftEar && pekeRightEar) {
+          pekeLeftEar.rotation.z = 0.25 + beat * 0.16;
+          pekeRightEar.rotation.z = -0.25 - beat * 0.16;
+        }
+      } else {
+        // Modo estándar: respiración suave y seguimiento del puntero
+        pekeHamsterGroup.position.y = Math.sin(clock * 2) * 0.04;
+        pekeHamsterGroup.rotation.z = 0;
+        pekeHamsterGroup.rotation.y += (pekeTargetRotation.y - pekeHamsterGroup.rotation.y) * 0.08;
+        pekeHamsterGroup.rotation.x += (pekeTargetRotation.x - pekeHamsterGroup.rotation.x) * 0.08;
+
+        // Movimiento de orejas sutil
+        if (pekeLeftEar && pekeRightEar) {
+          pekeLeftEar.rotation.z = 0.25 + Math.sin(clock * 3) * 0.06;
+          pekeRightEar.rotation.z = -0.25 - Math.sin(clock * 3) * 0.06;
+        }
+      }
     }
 
-    // 2. Movimiento de orejas sutil
-    if (pekeLeftEar && pekeRightEar) {
-      pekeLeftEar.rotation.z = 0.25 + Math.sin(clock * 3) * 0.06;
-      pekeRightEar.rotation.z = -0.25 - Math.sin(clock * 3) * 0.06;
-    }
-
-    // 3. Pestañeo automático realista
+    // 2. Pestañeo automático realista
     if (pekeLeftEye && pekeRightEye) {
       if (clock > nextBlink && clock < nextBlink + 0.35) {
         pekeLeftEye.scale.y = 0.1;
@@ -322,12 +681,12 @@ function animatePeke3D() {
       }
     }
 
-    // 4. Animación de habla y ruiditos (mueve la boca, orejitas y bigotes si isSpeaking = true)
+    // 3. Animación de habla y ruiditos (mueve la boca y orejitas si isSpeaking = true)
     if (pekeMouth) {
       if (isSpeaking) {
         pekeMouth.scale.y = 1.35 + Math.sin(clock * 24) * 0.85;
         pekeMouth.scale.x = 0.95 + Math.cos(clock * 18) * 0.35;
-        if (pekeLeftEar && pekeRightEar) {
+        if (pekeLeftEar && pekeRightEar && currentSkin !== 'dance') {
           pekeLeftEar.rotation.z = 0.25 + Math.sin(clock * 22) * 0.09;
           pekeRightEar.rotation.z = -0.25 - Math.sin(clock * 22) * 0.09;
         }
@@ -398,6 +757,28 @@ function onPekeTapped() {
     const pitagoricaSpeech = document.getElementById('pekePitagoricaMsg');
     if (pitagoricaSpeech) {
       pitagoricaSpeech.innerHTML = magicQuotes[Math.floor(Math.random() * magicQuotes.length)];
+    }
+  } else if (currentContainerId === 'pekePremiosAvatarBox') {
+    const premiosQuotes = [
+      `¡Pip-pip! 🐹 ¡Qué elegante me veo con mi traje de gala y moño, ${student}!`,
+      `¡Squee! 🎁 ¡Todas esas estrellas te van a dar los mejores premios con papá!`,
+      `¡Nom-nom! 🏅 ¡Cada esfuerzo tuyo merece una medalla de oro!`,
+      `¡Pip-squeak! 🎩 ¡Isabella, eres una campeona de gala!`
+    ];
+    const premiosSpeech = document.getElementById('pekePremiosMsg');
+    if (premiosSpeech) {
+      premiosSpeech.innerHTML = premiosQuotes[Math.floor(Math.random() * premiosQuotes.length)];
+    }
+  } else if (currentContainerId === 'pekeDesafioAvatarBox') {
+    const desafioQuotes = [
+      `¡Pip-squeak! 👑 ¡Con mi corona puesta sé que vas a ganar este desafío, ${student}!`,
+      `¡Squee! 🎯 ¡12 ejercicios para demostrar lo seca que eres en 4° básico!`,
+      `¡Nom-nom! 🌻 ¡Doble de semillitas para mi pancita si lo logras!`,
+      `¡Pip-pip! ⭐ ¡Vamos con todo, Isabella!`
+    ];
+    const desafioSpeech = document.getElementById('pekeDesafioMsg');
+    if (desafioSpeech) {
+      desafioSpeech.innerHTML = desafioQuotes[Math.floor(Math.random() * desafioQuotes.length)];
     }
   }
 }

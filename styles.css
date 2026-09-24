@@ -2338,3 +2338,101 @@ body {
   border-radius: var(--radius-full);
   display: inline-block;
 }
+
+/* ========================================================
+   SISTEMA DE SKINS DINÁMICAS Y ROPERO DE PEKE 🐹👗
+   ======================================================== */
+.peke-skin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #FFFFFF;
+  border: 1.5px solid #FCD34D;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #B45309;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
+  margin-bottom: 6px;
+  letter-spacing: 0.2px;
+  user-select: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.peke-skin-badge:hover {
+  transform: scale(1.05);
+  background: #FEF3C7;
+  border-color: #F59E0B;
+}
+
+.peke-skin-badge:active {
+  transform: scale(0.96);
+}
+
+.peke-closet-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(245, 158, 11, 0.35);
+}
+
+.closet-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #92400E;
+  margin-right: 4px;
+}
+
+.skin-btn {
+  background: #FFFFFF;
+  border: 1.5px solid #FDE68A;
+  border-radius: var(--radius-full);
+  padding: 4px 11px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #78350F;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.skin-btn:hover {
+  background: #FEF3C7;
+  border-color: #F59E0B;
+  transform: translateY(-1px);
+}
+
+.skin-btn:active {
+  transform: translateY(0);
+}
+
+.skin-btn.active {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #FFFFFF;
+  border-color: #B45309;
+  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.35);
+}
+
+.peke-banner-premios {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 45%, #FCD34D 100%);
+  border: 2px solid #F59E0B;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .peke-closet-bar {
+    justify-content: center;
+  }
+  .skin-btn {
+    font-size: 0.72rem;
+    padding: 3px 9px;
+  }
+}

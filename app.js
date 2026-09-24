@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCopisiButton();
   updateStatsDisplay();
   setupPWAInstall();
+  initClosetBar();
 
   // Botón volver
   document.getElementById('btnBackToMenu').addEventListener('click', () => {
@@ -381,7 +382,7 @@ function switchView(viewId) {
     targetSection.classList.add('active');
   }
 
-  // Mover Peke 3D al contenedor de la vista activa
+  // Mover Peke 3D al contenedor de la vista activa y asignar su skin temática
   if (typeof movePeke3D === 'function') {
     if (viewId === 'view-play') {
       movePeke3D('pekeAvatarBox');
@@ -390,6 +391,14 @@ function switchView(viewId) {
     } else if (viewId === 'view-pitagorica') {
       setTimeout(() => {
         movePeke3D('pekePitagoricaAvatarBox');
+      }, 40);
+    } else if (viewId === 'view-premios') {
+      setTimeout(() => {
+        movePeke3D('pekePremiosAvatarBox');
+      }, 40);
+    } else if (viewId === 'view-desafio') {
+      setTimeout(() => {
+        movePeke3D('pekeDesafioAvatarBox');
       }, 40);
     }
   }
@@ -405,6 +414,29 @@ function switchView(viewId) {
     renderTablesToggleGrid();
     renderCustomRewardsList();
   }
+}
+
+// --- INTERACCIÓN DEL ROPERO Y CAMBIO DE SKINS DE PEKE ---
+function initClosetBar() {
+  const closetBar = document.getElementById('pekeClosetBar');
+  if (closetBar) {
+    closetBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.skin-btn');
+      if (!btn) return;
+      const skin = btn.getAttribute('data-skin');
+      if (typeof setPekeSkin === 'function') {
+        setPekeSkin(skin, true);
+      }
+    });
+  }
+
+  // Permitir tocar cualquier badge de skin para alternar a la siguiente
+  document.addEventListener('click', (e) => {
+    const badge = e.target.closest('.peke-skin-badge');
+    if (badge && typeof cyclePekeSkin === 'function') {
+      cyclePekeSkin();
+    }
+  });
 }
 
 // --- ACTUALIZAR CONTADORES SUPERIORES ---

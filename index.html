@@ -110,7 +110,19 @@
           </svg>
         </div>
         <div class="peke-speech">
+          <div class="peke-skin-badge" id="pekeHomeSkinBadge" title="Toca a Peke para ver su reacción">🎵 Fiesta Bailando</div>
           <p id="pekeHomeMsg">¡Hola! Soy <strong>Peke</strong> 🐹. ¿Qué tabla practicamos hoy? ¡Gana semillitas para mi frasco!</p>
+          
+          <div class="peke-closet-bar" id="pekeClosetBar">
+            <span class="closet-title">👗 Ropero:</span>
+            <button type="button" class="skin-btn active" data-skin="dance" title="Modo Fiesta Bailando">🎵 Baile</button>
+            <button type="button" class="skin-btn" data-skin="glasses" title="Profesora Sabia con Lentes">👓 Lentes</button>
+            <button type="button" class="skin-btn" data-skin="suit" title="Traje de Gala con Moño">🎩 Traje</button>
+            <button type="button" class="skin-btn" data-skin="crown" title="Corona de Campeona">👑 Corona</button>
+            <button type="button" class="skin-btn" data-skin="sport" title="Cinta Deportiva Ninja">🥋 Deporte</button>
+            <button type="button" class="skin-btn" data-skin="default" title="Peke Clásica Esponjosa">🐹 Clásica</button>
+          </div>
+
           <div id="pwaBannerContainer" class="banner-install-container hidden">
             <button id="btnBannerInstall" class="banner-install-btn">
               <span>📲</span> Instalar en el Celular (¡Juega sin internet!)
@@ -176,8 +188,9 @@
               </g>
             </svg>
           </div>
-          <div class="peke-dialogue-bubble" id="pekeDialogue">
-            ¡Tú puedes! ¿Cuánto es esto?
+          <div class="peke-dialogue-bubble">
+            <div class="peke-skin-badge" id="pekePlaySkinBadge">🥋 Cinta Deportiva</div>
+            <div id="pekeDialogue">¡Tú puedes! ¿Cuánto es esto?</div>
           </div>
         </div>
 
@@ -236,9 +249,10 @@
     <section id="view-desafio" class="view-section">
       <div class="desafio-card">
         <div class="desafio-hero">
-          <span class="hero-emoji">🎯</span>
-          <h2>El Gran Desafío de Peke</h2>
-          <p>¡Demuestra que eres una campeona de 4° básico! Responderás 12 multiplicaciones variadas de todas las tablas.</p>
+          <div class="peke-mini-avatar" id="pekeDesafioAvatarBox" style="margin: 0 auto 10px; width: 115px; height: 115px;"></div>
+          <div class="peke-skin-badge" id="pekeDesafioSkinBadge" style="margin-bottom: 8px;">👑 Corona Campeona</div>
+          <h2 style="margin-top: 4px;">El Gran Desafío de Peke</h2>
+          <p id="pekeDesafioMsg">¡Demuestra que eres una campeona de 4° básico! Responderás 12 multiplicaciones variadas de todas las tablas.</p>
         </div>
 
         <div class="desafio-options">
@@ -258,8 +272,11 @@
       <div class="peke-banner peke-banner-pitagorica">
         <div class="peke-mini-avatar" id="pekePitagoricaAvatarBox"></div>
         <div class="peke-speech">
-          <span class="subject-badge-pill" style="background: #FFFBEB; color: #D97706; border: 1.5px solid #F59E0B;">✨ TABLA MÁGICA DE PEKE</span>
-          <p id="pekePitagoricaMsg">¡Hola, <strong>Isabella</strong>! Soy <strong>Peke</strong> 🐹. Toca cualquier número en la tabla para descubrir su truco secreto.</p>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px;">
+            <span class="subject-badge-pill" style="background: #FFFBEB; color: #D97706; border: 1.5px solid #F59E0B;">✨ TABLA MÁGICA DE PEKE</span>
+            <div class="peke-skin-badge" id="pekePitagoricaSkinBadge">👓 Profesora Sabia</div>
+          </div>
+          <p id="pekePitagoricaMsg">¡Hola, <strong>Isabella</strong>! Soy <strong>Peke la Sabia</strong> 🐹. Toca cualquier número en la tabla para descubrir su truco secreto.</p>
         </div>
       </div>
 
@@ -284,6 +301,16 @@
 
     <!-- VISTA 5: Premios y Medallas de Peke -->
     <section id="view-premios" class="view-section">
+      <div class="peke-banner peke-banner-premios">
+        <div class="peke-mini-avatar" id="pekePremiosAvatarBox"></div>
+        <div class="peke-speech">
+          <div class="peke-skin-badge" id="pekePremiosSkinBadge">🎩 Traje de Gala</div>
+          <p id="pekePremiosMsg">
+            ¡Pip-pip! 🐹 ¡Bienvenida a tu vitrina de gala, <strong>Isabella</strong>! Aquí tus estrellas ⭐ se convierten en premios de la vida real con papá.
+          </p>
+        </div>
+      </div>
+
       <div class="premios-header">
         <h2>🏆 Vitrina de Premios y Logros</h2>
         <p>¡Gana estrellas estudiando para canjear tus vales con papá y coleccionar medallas!</p>
