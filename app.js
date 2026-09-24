@@ -387,6 +387,10 @@ function switchView(viewId) {
       movePeke3D('pekeAvatarBox');
     } else if (viewId === 'view-tables') {
       movePeke3D('pekeHomeAvatarBox');
+    } else if (viewId === 'view-pitagorica') {
+      setTimeout(() => {
+        movePeke3D('pekePitagoricaAvatarBox');
+      }, 40);
     }
   }
 
@@ -846,7 +850,6 @@ function triggerConfetti() {
 // --- TABLA PITAGÓRICA INTERACTIVA (12x12) ---
 function renderPitagoricaTable() {
   const container = document.getElementById('pitagoricaTable');
-  const detail = document.getElementById('pitagoricaDetail');
   if (!container) return;
   container.innerHTML = '';
 
@@ -882,11 +885,7 @@ function renderPitagoricaTable() {
       cell.addEventListener('click', () => {
         playClickSound();
         highlightPitagorica(r, c);
-        detail.innerHTML = `
-          <span class="detail-badge">
-            🐹 <strong>${r} × ${c} = ${r * c}</strong> &nbsp; (o también ${c} × ${r} = ${r * c})
-          </span>
-        `;
+        explainMultiplication(r, c);
       });
 
       container.appendChild(cell);
@@ -901,12 +900,218 @@ function highlightPitagorica(targetR, targetC) {
     const row = Math.floor(index / 13);
     const col = index % 13;
 
+    // Resaltar fila y columna que se cruzan
     if (row === targetR || col === targetC) {
       cell.classList.add('p-highlight');
     } else {
       cell.classList.remove('p-highlight');
     }
+
+    // Resaltar la casilla exacta seleccionada (celda de cruce)
+    if (row === targetR && col === targetC) {
+      cell.classList.add('p-selected');
+    } else {
+      cell.classList.remove('p-selected');
+    }
   });
+}
+
+// Generador de explicaciones en palabras cariñosas e intuitivas para Isabella (4° Básico)
+function getMultiplicationTrick(r, c, name) {
+  const product = r * c;
+  const isSquare = r === c;
+
+  if (isSquare) {
+    return {
+      title: '🔲 Cuadrado Perfecto',
+      speech: `¡Formaste un cuadrado perfecto, ${name}! 🔲 Si pones ${r} filas con ${r} semillitas cada una, ¡queda una cajita cuadrada perfecta de ${product} semillitas!`,
+      trick: `Cuando multiplicas un número por sí mismo (${r} × ${r}), ¡los dos lados son iguales como un cuadrado! Por eso forman la diagonal dorada de la tabla.`
+    };
+  }
+
+  // Si interviene el 1
+  if (r === 1 || c === 1) {
+    const other = r === 1 ? c : r;
+    return {
+      title: '🪞 El Truco del Espejo',
+      speech: `¡El truco del espejo, ${name}! 🪞 Cualquier número que se mira en el 1, ¡se ve a sí mismo igualito! Sigue siendo ${other}.`,
+      trick: `Multiplicar por 1 significa tener solo 1 grupito. Por eso 1 × ${other} siempre da ${other}.`
+    };
+  }
+
+  // Si interviene el 2
+  if (r === 2 || c === 2) {
+    const other = r === 2 ? c : r;
+    return {
+      title: '🐰 El Truco del Doble',
+      speech: `¡Es el doble, ${name}! 🐰 Multiplicar por 2 es solo sumar dos veces el mismo número: ${other} + ${other} = ${product}. ¡Súper fácil!`,
+      trick: `Cada vez que multipliques por 2, piensa en sumar el número consigo mismo: doble de ${other} es ${product}.`
+    };
+  }
+
+  // Si interviene el 3
+  if (r === 3 || c === 3) {
+    const other = r === 3 ? c : r;
+    const double = other * 2;
+    return {
+      title: '🌟 El Truco del Triple',
+      speech: `¡Es el triple, ${name}! 🌟 Calcula el doble de ${other} (que es ${double}) y súmale una vez más (${other}): ¡llegas directo a ${product}!`,
+      trick: `Para multiplicar por 3: haz el doble primero (${double}) y luego súmale ${other} (${double} + ${other} = ${product}).`
+    };
+  }
+
+  // Si interviene el 4
+  if (r === 4 || c === 4) {
+    const other = r === 4 ? c : r;
+    const double = other * 2;
+    return {
+      title: '⚡ El Doble del Doble',
+      speech: `¡El truco del doble del doble! ⚡ Primero doblas el ${other} (te da ${double}) y a ese resultado lo vuelves a doblar: ¡${product}!`,
+      trick: `Como 4 es 2 × 2, solo tienes que calcular el doble dos veces: ${other} ➔ ${double} ➔ ${product}.`
+    };
+  }
+
+  // Si interviene el 5
+  if (r === 5 || c === 5) {
+    const other = r === 5 ? c : r;
+    return {
+      title: '🖐️ El Patrón de las Manos y el Reloj',
+      speech: `¡El truco de las manos y el reloj! 🖐️ Todos los resultados del 5 terminan siempre en 0 o en 5. ¡5 × ${other} = ${product}!`,
+      trick: `Contar de 5 en 5 es como mirar los minutos del reloj o contar con los 5 dedos de tus manos: 5, 10, 15, 20... ¡siempre termina en 0 o 5!`
+    };
+  }
+
+  // Si interviene el 10
+  if (r === 10 || c === 10) {
+    const other = r === 10 ? c : r;
+    return {
+      title: '🚀 El Superpoder del Cero',
+      speech: `¡El truco más rápido del mundo, ${name}! 🚀 Solo tómale una foto al ${other} y ponle un 0 gigante al final: ¡${product}!`,
+      trick: `Al multiplicar por 10, cada unidad se convierte en decena. Solo agregas un 0 a la derecha: ${other} con un cero es ${product}.`
+    };
+  }
+
+  // Si interviene el 9
+  if (r === 9 || c === 9) {
+    const other = r === 9 ? c : r;
+    const decenas = Math.floor(product / 10);
+    const unidades = product % 10;
+    return {
+      title: '✨ El Truco Ninja del 9',
+      speech: `¡El truco ninja de los dedos, ${name}! ✨ Mira: las dos cifras de ${product} siempre suman 9 (${decenas} + ${unidades} = 9). ¡Y la decena (${decenas}) es uno menos que ${other}!`,
+      trick: `En la tabla del 9: la primera cifra es uno menos que ${other} (${other} - 1 = ${decenas}), y la segunda cifra es lo que falta para llegar a 9 (${unidades}).`
+    };
+  }
+
+  // Si interviene el 11
+  if (r === 11 || c === 11) {
+    const other = r === 11 ? c : r;
+    if (other <= 9) {
+      return {
+        title: '👯 Los Números Gemelos',
+        speech: `¡Los números gemelos, ${name}! 👯 Hasta el 9, el número se repite dos veces igualito: ¡${product}!`,
+        trick: `Multiplicar un dígito por 11 es escribir el mismo número dos veces seguidas: 11 × ${other} = ${other}${other}.`
+      };
+    } else {
+      return {
+        title: '👯 Multiplicar por 11',
+        speech: `¡El truco del 11, ${name}! Multiplica por 10 primero (${other * 10}) y súmale una vez más (${other}): ¡${product}!`,
+        trick: `11 veces ${other} es lo mismo que 10 veces (${other * 10}) más una vez (${other}).`
+      };
+    }
+  }
+
+  // Si interviene el 6
+  if (r === 6 || c === 6) {
+    const other = r === 6 ? c : r;
+    const por5 = 5 * other;
+    return {
+      title: '🎲 El Doble del 3 o Uno más del 5',
+      speech: `¡El truco del 6, ${name}! 🎲 Puedes hacer 5 veces ${other} (${por5}) y sumarle una filita más (${other}): ¡llegas a ${product}!`,
+      trick: `6 × ${other} = (5 × ${other}) + ${other} = ${por5} + ${other} = ${product}. ¡Apoyarse en la tabla del 5 siempre ayuda!`
+    };
+  }
+
+  // Si interviene el 8
+  if (r === 8 || c === 8) {
+    const other = r === 8 ? c : r;
+    const d1 = other * 2;
+    const d2 = d1 * 2;
+    return {
+      title: '🐙 El Truco del Pulpo',
+      speech: `¡El truco del pulpo, ${name}! 🐙 Doble del doble del doble. Doblas ${other} tres veces seguidas: ${d1} ➔ ${d2} ➔ ¡${product}!`,
+      trick: `Como 8 es 2 × 2 × 2, solo doblas tres veces: el doble de ${other} es ${d1}, el doble de ${d1} es ${d2}, y el doble de ${d2} es ${product}.`
+    };
+  }
+
+  // Si interviene el 12
+  if (r === 12 || c === 12) {
+    const other = r === 12 ? c : r;
+    const por10 = 10 * other;
+    const por2 = 2 * other;
+    return {
+      title: '🥚 La Docena Completa',
+      speech: `¡La docena de huevitos, ${name}! 🥚 Multiplica por 10 primero (${por10}) y luego le sumas el doble (${por2}): ¡llegas a ${product} en un segundo!`,
+      trick: `12 × ${other} = (10 × ${other}) + (2 × ${other}) = ${por10} + ${por2} = ${product}. ¡Descomponer en 10 y 2 es súper fácil!`
+    };
+  }
+
+  // Caso 7 (descomposición en 5 y 2)
+  const other = r === 7 ? c : r;
+  const por5 = 5 * other;
+  const por2 = 2 * other;
+  return {
+    title: '📅 La Semana Mágica',
+    speech: `¡La semana mágica, ${name}! 📅 Como la semana tiene 7 días, separamos el 7 en 5 y 2: ${por5} + ${por2} = ${product}. ¡Así no tienes que memorizarlo a la fuerza!`,
+    trick: `7 × ${other} = (5 × ${other}) + (2 × ${other}) = ${por5} + ${por2} = ${product}. ¡Multiplicar por 5 y por 2 es facilito!`
+  };
+}
+
+function explainMultiplication(r, c) {
+  const student = gameState.studentName || 'Isabella';
+  const info = getMultiplicationTrick(r, c, student);
+  const product = r * c;
+
+  // 1. Actualizar globo de diálogo de Peke en el banner
+  const pekeMsg = document.getElementById('pekePitagoricaMsg');
+  if (pekeMsg) {
+    pekeMsg.innerHTML = info.speech;
+  }
+
+  // 2. Actualizar badge con la operación matemática
+  const badge = document.getElementById('pitagoricaBadge');
+  if (badge) {
+    if (r !== c) {
+      badge.innerHTML = `🐹 <strong>${r} × ${c} = ${product}</strong> &nbsp; (o también ${c} × ${r} = ${product})`;
+    } else {
+      badge.innerHTML = `🐹 <strong>${r} × ${c} = ${product}</strong> &nbsp; (¡Cuadrado perfecto!)`;
+    }
+  }
+
+  // 3. Actualizar la tarjeta explicativa con el truco en palabras para Isabella
+  const noteEl = document.getElementById('pitagoricaMagicNote');
+  if (noteEl) {
+    const conmutativaNote = (r !== c)
+      ? `💡 <strong>Amigos que dan lo mismo al revés:</strong> Da exactamente igual calcular <strong>${r} × ${c}</strong> que <strong>${c} × ${r}</strong>, ¡ambos dan <strong>${product}</strong> semillitas! 🐹🔄`
+      : `💡 <strong>Cuadrado Mágico:</strong> Al tener el mismo número en filas y columnas (${r} × ${r}), las semillitas forman un cuadrado perfecto 🔲.`;
+
+    noteEl.innerHTML = `
+      <div class="magic-note-title">
+        <span>${info.title}</span>
+      </div>
+      <p class="magic-note-trick">${info.trick}</p>
+      <div class="magic-note-conmutativa">${conmutativaNote}</div>
+    `;
+    noteEl.classList.remove('hidden');
+  }
+
+  // 4. Salto 3D y sonido tierno de hámster (CERO voces artificiales)
+  if (typeof triggerPekeJump === 'function') {
+    triggerPekeJump();
+  }
+  if (typeof playHamsterSound === 'function') {
+    playHamsterSound('happy');
+  }
 }
 
 // --- RENDERIZAR VITRINA DE MEDALLAS ---

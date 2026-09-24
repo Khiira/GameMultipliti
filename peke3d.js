@@ -388,6 +388,17 @@ function onPekeTapped() {
     homeSpeech.innerHTML = chosenQuote;
   } else if (dialogue && currentContainerId === 'pekeAvatarBox') {
     dialogue.textContent = `¡Pip-pip! 🐹 ¡Tú puedes, ${student}!`;
+  } else if (currentContainerId === 'pekePitagoricaAvatarBox') {
+    const magicQuotes = [
+      `¡Pip-pip! 🐹 ¡Toca cualquier casilla para descubrir el truco secreto, ${student}!`,
+      `¡Squee! 🌻 La tabla mágica te ayuda a multiplicar sin memorizar a la fuerza.`,
+      `¡Nom-nom! 🔲 Los números de la diagonal forman cuadrados perfectos de semillitas.`,
+      `¡Pip-squeak! ⭐ ¿Viste que al revés siempre da el mismo resultado?`
+    ];
+    const pitagoricaSpeech = document.getElementById('pekePitagoricaMsg');
+    if (pitagoricaSpeech) {
+      pitagoricaSpeech.innerHTML = magicQuotes[Math.floor(Math.random() * magicQuotes.length)];
+    }
   }
 }
 

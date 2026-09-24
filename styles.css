@@ -749,12 +749,24 @@ body {
   font-size: 1rem;
 }
 
-.pitagorica-detail {
-  min-height: 44px;
+.peke-banner-pitagorica {
+  background: linear-gradient(135deg, #FFF0DC 0%, #FFE2C2 100%);
+  border: 2px solid #FFCD94;
+  margin-bottom: 18px;
+}
+
+.pitagorica-explanation-card {
+  max-width: 650px;
+  margin: 0 auto 16px;
+  text-align: center;
+}
+
+.pitagorica-detail-row {
   display: flex;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .detail-badge {
@@ -765,6 +777,45 @@ body {
   font-size: 1.1rem;
   font-weight: 800;
   color: #1D4ED8;
+  display: inline-block;
+  box-shadow: var(--shadow-sm);
+}
+
+.pitagorica-magic-note {
+  background: #FFFBEB;
+  border: 2px solid #FDE68A;
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.magic-note-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #B45309;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.magic-note-trick {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.magic-note-conmutativa {
+  font-size: 0.88rem;
+  color: #065F46;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  line-height: 1.4;
 }
 
 .pitagorica-wrapper {
@@ -825,6 +876,16 @@ body {
 
 .p-highlight {
   background: #FEF08A;
+}
+
+.p-cell.p-selected {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 900 !important;
+  transform: scale(1.22);
+  z-index: 12;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.45) !important;
+  border: 2px solid #FFFFFF;
 }
 
 /* ========================================================
@@ -1965,6 +2026,11 @@ body {
   }
 
   /* Vista 4: Tabla Pitagórica */
+  .peke-banner-pitagorica {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+  }
+
   .pitagorica-header h2 {
     font-size: 1.25rem;
   }
@@ -1976,6 +2042,25 @@ body {
   .detail-badge {
     font-size: 0.92rem;
     padding: 6px 14px;
+  }
+
+  .pitagorica-magic-note {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+
+  .magic-note-title {
+    font-size: 0.95rem;
+  }
+
+  .magic-note-trick {
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
+  .magic-note-conmutativa {
+    font-size: 0.82rem;
+    padding: 5px 8px;
   }
 
   .pitagorica-wrapper {

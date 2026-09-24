@@ -255,13 +255,24 @@
 
     <!-- VISTA 4: Tabla Pitagórica Interactiva (12x12) -->
     <section id="view-pitagorica" class="view-section">
+      <div class="peke-banner peke-banner-pitagorica">
+        <div class="peke-mini-avatar" id="pekePitagoricaAvatarBox"></div>
+        <div class="peke-speech">
+          <span class="subject-badge-pill" style="background: #FFFBEB; color: #D97706; border: 1.5px solid #F59E0B;">✨ TABLA MÁGICA DE PEKE</span>
+          <p id="pekePitagoricaMsg">¡Hola, <strong>Isabella</strong>! Soy <strong>Peke</strong> 🐹. Toca cualquier número en la tabla para descubrir su truco secreto.</p>
+        </div>
+      </div>
+
       <div class="pitagorica-header">
         <h2>📊 La Tabla Mágica de Peke (1 al 12)</h2>
         <p>Toca cualquier casilla para ver cómo se cruzan las filas y columnas:</p>
       </div>
 
-      <div class="pitagorica-detail" id="pitagoricaDetail">
-        <span class="detail-badge">Selecciona un número para ver el truco</span>
+      <div class="pitagorica-explanation-card" id="pitagoricaExplanationCard">
+        <div class="pitagorica-detail-row">
+          <span class="detail-badge" id="pitagoricaBadge">🐹 Toca un número para ver el truco</span>
+        </div>
+        <div id="pitagoricaMagicNote" class="pitagorica-magic-note hidden"></div>
       </div>
 
       <div class="pitagorica-wrapper">
