@@ -315,15 +315,16 @@ function buildSkinAccessories() {
   pekeSkins = {};
 
   // Materiales compartidos
+  const matWhite = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.4 });
   const matGlassesGold = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.25, metalness: 0.85 });
   const matGlassLens = new THREE.MeshStandardMaterial({ color: 0xBAE6FD, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.38 });
   const matBowTie = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.35 });
   const matHat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.4 });
   const matShirt = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
   const matGoldButton = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.2, metalness: 0.85 });
-  const matHeadbandDJ = new THREE.MeshStandardMaterial({ color: 0x8B5CF6, roughness: 0.3, metalness: 0.4 });
-  const matCupsDJ = new THREE.MeshStandardMaterial({ color: 0xEC4899, roughness: 0.35, metalness: 0.2 });
-  const matCupInner = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5 });
+  const matHeadbandDJ = new THREE.MeshStandardMaterial({ color: 0x8B5CF6, roughness: 0.3, metalness: 0.4, side: THREE.DoubleSide });
+  const matCupsDJ = new THREE.MeshStandardMaterial({ color: 0xEC4899, roughness: 0.35, metalness: 0.2, side: THREE.DoubleSide });
+  const matCupInner = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5, side: THREE.DoubleSide });
 
   // ----------------------------------------------------
   // 1. SKIN GLASSES (Peke Profesora Sabia con Lentes 👓)
@@ -447,35 +448,43 @@ function buildSkinAccessories() {
   // ----------------------------------------------------
   const danceGroup = new THREE.Group();
 
-  // Diadema de audífonos que calza justo sobre la cabeza (sin salirse del cuadro)
-  const archGeo = new THREE.TorusGeometry(0.62, 0.048, 12, 32, Math.PI * 0.90);
-  const arch = new THREE.Mesh(archGeo, matHeadbandDJ);
-  arch.rotation.z = -Math.PI * 0.95 / 2;
-  arch.rotation.x = 0.04;
-  arch.position.set(0, 0.48, 0.08);
-  danceGroup.add(arch);
+  // Diadema continua y 100% simétrica de oreja a oreja con TubeGeometry 3D
+  const headbandCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.64, 0.48, 0.10), // Conecta en auricular izquierdo
+    new THREE.Vector3(-0.38, 0.86, 0.10), // Curva izquierda sobre la cabeza
+    new THREE.Vector3( 0.00, 0.96, 0.10), // Cúspide central superior
+    new THREE.Vector3( 0.38, 0.86, 0.10), // Curva derecha sobre la cabeza
+    new THREE.Vector3( 0.64, 0.48, 0.10)  // Conecta en auricular derecho
+  ]);
+  const headbandGeo = new THREE.TubeGeometry(headbandCurve, 32, 0.048, 12, false);
+  const headbandMesh = new THREE.Mesh(headbandGeo, matHeadbandDJ);
+  danceGroup.add(headbandMesh);
 
-  // Auricular izquierdo
-  const cupGeo = new THREE.CylinderGeometry(0.19, 0.19, 0.11, 18);
+  // Auricular izquierdo (orientado horizontalmente abrazando la mejilla)
+  const cupGeo = new THREE.CylinderGeometry(0.20, 0.22, 0.11, 20);
   const leftCup = new THREE.Mesh(cupGeo, matCupsDJ);
   leftCup.position.set(-0.64, 0.48, 0.10);
-  leftCup.rotation.z = -0.30;
+  leftCup.rotation.z = Math.PI / 2;
+  leftCup.rotation.y = 0.15;
   danceGroup.add(leftCup);
 
-  const leftPad = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.04, 16), matCupInner);
-  leftPad.position.set(-0.59, 0.48, 0.10);
-  leftPad.rotation.z = -0.30;
+  const leftPad = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.04, 18), matCupInner);
+  leftPad.position.set(-0.58, 0.48, 0.10);
+  leftPad.rotation.z = Math.PI / 2;
+  leftPad.rotation.y = 0.15;
   danceGroup.add(leftPad);
 
-  // Auricular derecho
+  // Auricular derecho (orientado horizontalmente abrazando la mejilla)
   const rightCup = new THREE.Mesh(cupGeo, matCupsDJ);
   rightCup.position.set(0.64, 0.48, 0.10);
-  rightCup.rotation.z = 0.30;
+  rightCup.rotation.z = -Math.PI / 2;
+  rightCup.rotation.y = -0.15;
   danceGroup.add(rightCup);
 
-  const rightPad = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.04, 16), matCupInner);
-  rightPad.position.set(0.59, 0.48, 0.10);
-  rightPad.rotation.z = 0.30;
+  const rightPad = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.04, 18), matCupInner);
+  rightPad.position.set(0.58, 0.48, 0.10);
+  rightPad.rotation.z = -Math.PI / 2;
+  rightPad.rotation.y = -0.15;
   danceGroup.add(rightPad);
 
   danceGroup.visible = false;
