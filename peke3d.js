@@ -43,7 +43,7 @@ function initPeke3D(containerId = 'pekeHomeAvatarBox', defaultSkin = null) {
 
   // Cámara con margen amplio para que nada se corte
   pekeCamera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-  pekeCamera.position.set(0, 0.24, 4.65);
+  pekeCamera.position.set(0, 0.28, 4.8);
 
   // Renderer con fondo transparente
   pekeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -444,48 +444,79 @@ function buildSkinAccessories() {
   pekeSkins.suit = suitGroup;
 
   // ----------------------------------------------------
-  // 3. SKIN DANCE (Audífonos DJ & Fiesta 🎧 + Baile)
+  // 3. SKIN DANCE (Audífonos DJ / Popstar con Micrófono 🎧🎤)
   // ----------------------------------------------------
   const danceGroup = new THREE.Group();
 
-  // Diadema continua y 100% simétrica de oreja a oreja con TubeGeometry 3D
+  // Auriculares colocados exactamente SOBRE las orejitas reales de Peke (Y = 0.88, X = ±0.68)
+  const cupGeo = new THREE.CylinderGeometry(0.24, 0.26, 0.14, 24);
+  const padGeo = new THREE.CylinderGeometry(0.23, 0.23, 0.05, 20);
+  const neonRimGeo = new THREE.TorusGeometry(0.18, 0.025, 10, 24);
+
+  // Auricular izquierdo
+  const leftCup = new THREE.Mesh(cupGeo, matCupsDJ);
+  leftCup.position.set(-0.68, 0.88, 0.06);
+  leftCup.rotation.z = Math.PI / 2;
+  leftCup.rotation.y = 0.12;
+  danceGroup.add(leftCup);
+
+  const leftPad = new THREE.Mesh(padGeo, matCupInner);
+  leftPad.position.set(-0.62, 0.88, 0.06);
+  leftPad.rotation.z = Math.PI / 2;
+  leftPad.rotation.y = 0.12;
+  danceGroup.add(leftPad);
+
+  const leftNeon = new THREE.Mesh(neonRimGeo, matHeadbandDJ);
+  leftNeon.position.set(-0.76, 0.88, 0.06);
+  leftNeon.rotation.y = Math.PI / 2;
+  danceGroup.add(leftNeon);
+
+  // Auricular derecho
+  const rightCup = new THREE.Mesh(cupGeo, matCupsDJ);
+  rightCup.position.set(0.68, 0.88, 0.06);
+  rightCup.rotation.z = -Math.PI / 2;
+  rightCup.rotation.y = -0.12;
+  danceGroup.add(rightCup);
+
+  const rightPad = new THREE.Mesh(padGeo, matCupInner);
+  rightPad.position.set(0.62, 0.88, 0.06);
+  rightPad.rotation.z = -Math.PI / 2;
+  rightPad.rotation.y = -0.12;
+  danceGroup.add(rightPad);
+
+  const rightNeon = new THREE.Mesh(neonRimGeo, matHeadbandDJ);
+  rightNeon.position.set(0.76, 0.88, 0.06);
+  rightNeon.rotation.y = Math.PI / 2;
+  danceGroup.add(rightNeon);
+
+  // Diadema superior acolchada cruzando por arriba de la cabeza (de oreja a oreja)
   const headbandCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.64, 0.48, 0.10), // Conecta en auricular izquierdo
-    new THREE.Vector3(-0.38, 0.86, 0.10), // Curva izquierda sobre la cabeza
-    new THREE.Vector3( 0.00, 0.96, 0.10), // Cúspide central superior
-    new THREE.Vector3( 0.38, 0.86, 0.10), // Curva derecha sobre la cabeza
-    new THREE.Vector3( 0.64, 0.48, 0.10)  // Conecta en auricular derecho
+    new THREE.Vector3(-0.68, 0.94, 0.06), // Auricular izquierdo
+    new THREE.Vector3(-0.40, 1.18, 0.06), // Curva izquierda
+    new THREE.Vector3( 0.00, 1.24, 0.06), // Cúspide central superior
+    new THREE.Vector3( 0.40, 1.18, 0.06), // Curva derecha
+    new THREE.Vector3( 0.68, 0.94, 0.06)  // Auricular derecho
   ]);
-  const headbandGeo = new THREE.TubeGeometry(headbandCurve, 32, 0.048, 12, false);
+  const headbandGeo = new THREE.TubeGeometry(headbandCurve, 32, 0.052, 12, false);
   const headbandMesh = new THREE.Mesh(headbandGeo, matHeadbandDJ);
   danceGroup.add(headbandMesh);
 
-  // Auricular izquierdo (orientado horizontalmente abrazando la mejilla)
-  const cupGeo = new THREE.CylinderGeometry(0.20, 0.22, 0.11, 20);
-  const leftCup = new THREE.Mesh(cupGeo, matCupsDJ);
-  leftCup.position.set(-0.64, 0.48, 0.10);
-  leftCup.rotation.z = Math.PI / 2;
-  leftCup.rotation.y = 0.15;
-  danceGroup.add(leftCup);
+  // Bracito de Micrófono Boom de DJ (curvado hacia la boquita)
+  const micCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.68, 0.80, 0.08),
+    new THREE.Vector3(-0.52, 0.44, 0.50),
+    new THREE.Vector3(-0.30, 0.16, 0.92),
+    new THREE.Vector3(-0.10, 0.08, 1.04)
+  ]);
+  const micStemGeo = new THREE.TubeGeometry(micCurve, 20, 0.016, 8, false);
+  const micStem = new THREE.Mesh(micStemGeo, matHat);
+  danceGroup.add(micStem);
 
-  const leftPad = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.04, 18), matCupInner);
-  leftPad.position.set(-0.58, 0.48, 0.10);
-  leftPad.rotation.z = Math.PI / 2;
-  leftPad.rotation.y = 0.15;
-  danceGroup.add(leftPad);
-
-  // Auricular derecho (orientado horizontalmente abrazando la mejilla)
-  const rightCup = new THREE.Mesh(cupGeo, matCupsDJ);
-  rightCup.position.set(0.64, 0.48, 0.10);
-  rightCup.rotation.z = -Math.PI / 2;
-  rightCup.rotation.y = -0.15;
-  danceGroup.add(rightCup);
-
-  const rightPad = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.04, 18), matCupInner);
-  rightPad.position.set(0.58, 0.48, 0.10);
-  rightPad.rotation.z = -Math.PI / 2;
-  rightPad.rotation.y = -0.15;
-  danceGroup.add(rightPad);
+  // Espuma / Cabezal del micrófono
+  const micHeadGeo = new THREE.SphereGeometry(0.055, 12, 10);
+  const micHead = new THREE.Mesh(micHeadGeo, matCupsDJ);
+  micHead.position.set(-0.10, 0.08, 1.04);
+  danceGroup.add(micHead);
 
   danceGroup.visible = false;
   pekeHamsterGroup.add(danceGroup);
@@ -530,7 +561,7 @@ function buildSkinAccessories() {
   pekeSkins.crown = crownGroup;
 
   // ----------------------------------------------------
-  // 5. SKIN SPORT (Peke Deportista 🧢: Gorra, Silbato y Muñequeras)
+  // 5. SKIN SPORT (Peke Deportista 🧢: Gorra Elevada, Silbato y Muñequeras)
   // ----------------------------------------------------
   const sportGroup = new THREE.Group();
   const matSportBlue = new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.35 }); // Azul atlético brillante
@@ -538,35 +569,35 @@ function buildSkinAccessories() {
   const matSilver = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.15, metalness: 0.9 }); // Metal plateado silbato
   const matCord = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.8 }); // Cordón
 
-  // 1. Gorra deportiva con visera frontal (Baseball / Running Cap)
+  // 1. Gorra deportiva elevada sobre la cabeza (NO tapa los ojos de Peke en Y=0.32)
   const capGroup = new THREE.Group();
-  capGroup.position.set(0, 0.52, 0.08);
-  capGroup.rotation.x = 0.16;
+  capGroup.position.set(0, 0.76, 0.04);
+  capGroup.rotation.x = -0.10; // Ligera inclinación hacia atrás, estilo visera deportiva fresca
 
-  // Cúpula / Casquete de la gorra
-  const capDomeGeo = new THREE.SphereGeometry(0.74, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.48);
-  capDomeGeo.scale(1.04, 0.86, 0.98);
+  // Casquete / Cúpula superior de la gorra
+  const capDomeGeo = new THREE.SphereGeometry(0.68, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.46);
+  capDomeGeo.scale(1.02, 0.86, 0.96);
   const capDome = new THREE.Mesh(capDomeGeo, matSportBlue);
   capGroup.add(capDome);
 
-  // Botón superior blanco en la coronilla de la gorra
+  // Botón superior blanco de la gorra
   const capBtnGeo = new THREE.SphereGeometry(0.045, 8, 8);
   const capBtn = new THREE.Mesh(capBtnGeo, matWhite);
-  capBtn.position.set(0, 0.58, 0.04);
+  capBtn.position.set(0, 0.56, 0.02);
   capGroup.add(capBtn);
 
-  // Visera curvada sobresaliendo claramente hacia adelante
-  const visorGeo = new THREE.CylinderGeometry(0.56, 0.58, 0.04, 20, 1, false, -Math.PI * 0.36, Math.PI * 0.72);
+  // Visera deportiva saliente que nace arriba de la frente (Y=0.68) y se proyecta hacia adelante
+  const visorGeo = new THREE.CylinderGeometry(0.52, 0.55, 0.04, 20, 1, false, -Math.PI * 0.36, Math.PI * 0.72);
   const visor = new THREE.Mesh(visorGeo, matSportVisor);
-  visor.position.set(0, 0.02, 0.54);
-  visor.rotation.x = 0.38;
+  visor.position.set(0, -0.04, 0.56);
+  visor.rotation.x = 0.28;
   capGroup.add(visor);
 
   // Ribete blanco en el borde de la visera
-  const visorTrimGeo = new THREE.CylinderGeometry(0.59, 0.60, 0.025, 20, 1, false, -Math.PI * 0.36, Math.PI * 0.72);
+  const visorTrimGeo = new THREE.CylinderGeometry(0.555, 0.565, 0.025, 20, 1, false, -Math.PI * 0.36, Math.PI * 0.72);
   const visorTrim = new THREE.Mesh(visorTrimGeo, matWhite);
-  visorTrim.position.set(0, 0.02, 0.55);
-  visorTrim.rotation.x = 0.38;
+  visorTrim.position.set(0, -0.04, 0.57);
+  visorTrim.rotation.x = 0.28;
   capGroup.add(visorTrim);
 
   sportGroup.add(capGroup);
