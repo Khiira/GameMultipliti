@@ -1822,11 +1822,26 @@ function setupPWAInstall() {
   updatePwaConfigStatus();
 }
 
-// --- REGISTRO DE SERVICE WORKER PARA OFFLINE TOTAL ---
+// --- REGISTRO DE SERVICE WORKER PARA OFFLINE TOTAL Y AUTO-ACTUALIZACIÓN ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('Peke PWA: Service Worker activo y listo para trabajar offline'))
+      .then((reg) => {
+        console.log('Peke PWA: Service Worker activo y listo para trabajar offline');
+        // Chequear actualización en segundo plano si hay internet
+        if (navigator.onLine && reg && typeof reg.update === 'function') {
+          reg.update();
+        }
+      })
       .catch(err => console.log('Peke PWA Service Worker info:', err));
+  });
+
+  // Al activarse una nueva versión (skipWaiting), actualizar la app de forma transparente
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
   });
 }
